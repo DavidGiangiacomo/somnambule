@@ -8,14 +8,18 @@ rythme le joueur progresse-t-il ? »
 À chaque seconde simulée, dans cet ordre :
   1. le dormeur s'enfonce : la profondeur P augmente ;
   2. il récolte des fragments (parcours + moutons), multipliés par M(P) ;
-  3. si un obstacle arrive, le joueur l'enjambe plus ou moins bien, ce qui
-     fait remonter P (et, en cas de trébuchement, perdre des fragments) ;
+  3. si un obstacle arrive, le joueur l'enjambe plus ou moins bien selon son
+     profil (attentif, moyen ou idle pur), ce qui fait remonter P (et, en cas
+     de trébuchement, perdre des fragments) ;
   4. il achète les moutons qui valent le coup ;
   5. on note l'état de la nuit dans une ligne du fichier CSV.
 
 Utilisation, depuis la racine du dépôt :
     python3 simulateur/simulateur.py
-    python3 simulateur/simulateur.py --duree 60 --graine 7
+    python3 simulateur/simulateur.py --profil idle --duree 60
+    python3 simulateur/simulateur.py --obstacles 2 5 --graine 7
+
+Pour comparer les trois profils d'un coup : comparer_profils.py.
 
 Liste des options : python3 simulateur/simulateur.py --help
 """
@@ -48,17 +52,34 @@ PAS_S = 1
 # que soit le dossier depuis lequel on lance le script.
 DOSSIER_SIMULATEUR = Path(__file__).parent
 FICHIER_BALANCE = DOSSIER_SIMULATEUR.parent / "data" / "balance.json"
-FICHIER_SORTIE = DOSSIER_SIMULATEUR / "sorties" / "nuit.csv"
+DOSSIER_SORTIES = DOSSIER_SIMULATEUR / "sorties"
 
-# Comportement du joueur simulé face aux obstacles : la probabilité de chaque
-# issue d'enjambée. Les trois valeurs doivent faire 1 (= 100 %).
-# C'est le profil « moyen » de l'issue #2 ; les profils « attentif » et
-# « idle pur » viendront avec cette issue.
-PROFIL_MOYEN = {
-    "nom": "moyen",
-    "parfaite": 0.50,
-    "maladroite": 0.40,
-    "trebuchement": 0.10,
+# Les trois profils de joueur de l'issue #2. Chaque profil donne la
+# probabilité de chaque issue d'enjambée ; les trois valeurs doivent faire 1
+# (= 100 %). Tous les profils achètent des moutons de la même façon : seule
+# leur manière d'enjamber les obstacles change.
+PROFILS = {
+    # 90 % de parfaites (issue #2). Les 10 % restants sont répartis comme
+    # pour le profil moyen : 4 maladroites pour 1 trébuchement.
+    "attentif": {
+        "nom": "attentif",
+        "parfaite": 0.90,
+        "maladroite": 0.08,
+        "trebuchement": 0.02,
+    },
+    "moyen": {
+        "nom": "moyen",
+        "parfaite": 0.50,
+        "maladroite": 0.40,
+        "trebuchement": 0.10,
+    },
+    # Ne touche jamais l'écran : trébuche sur chaque obstacle.
+    "idle": {
+        "nom": "idle pur",
+        "parfaite": 0.0,
+        "maladroite": 0.0,
+        "trebuchement": 1.0,
+    },
 }
 
 
@@ -407,15 +428,29 @@ def grand_nombre(x):
     return f"{x:,.0f}".replace(",", " ")
 
 
+def profondeur_moyenne(lignes):
+    """Renvoie la profondeur moyenne sur toute la nuit."""
+    # sum(... for ligne in lignes) additionne la profondeur de chaque ligne ;
+    # len() donne le nombre de lignes.
+    return sum(ligne["profondeur"] for ligne in lignes) / len(lignes)
+
+
+def decrire_obstacles(balance):
+    """Décrit la fréquence des obstacles : "toutes les 3 à 7 s"."""
+    obstacles = balance["obstacles"]
+    # `:g` écrit le nombre sans décimales inutiles : 3.0 -> "3", 2.5 -> "2.5".
+    texte = f"toutes les {obstacles['intervalle_min_s']:g} à {obstacles['intervalle_max_s']:g} s"
+    return texte.replace(".", ",")
+
+
 def afficher_resume(lignes, balance, profil, graine, duree_calcul_s, chemin_csv):
     """Affiche à l'écran les chiffres clés de la nuit simulée."""
     fin = lignes[-1]  # [-1] = dernier élément de la liste
-    # sum(... for ligne in lignes) additionne la profondeur de chaque ligne ;
-    # len() donne le nombre de lignes.
-    profondeur_moyenne = sum(ligne["profondeur"] for ligne in lignes) / len(lignes)
-    palier_moyen = formules.palier(profondeur_moyenne, balance)["nom"]
+    p_moyenne = profondeur_moyenne(lignes)
+    palier_moyen = formules.palier(p_moyenne, balance)["nom"]
 
     print(f"Nuit de {en_minutes(fin['seconde'])}, profil {profil['nom']}, graine {graine}")
+    print(f"Obstacles {decrire_obstacles(balance)}")
     print(f"Calcul : {duree_calcul_s:.3f} s".replace(".", ","))
     print()
     print("Premier passage par chaque palier :")
@@ -423,7 +458,7 @@ def afficher_resume(lignes, balance, profil, graine, duree_calcul_s, chemin_csv)
         seconde = premiere_seconde(lignes, "profondeur", palier["seuil"])
         # `:<15` aligne le nom à gauche sur 15 caractères, pour faire une colonne.
         print(f"  {palier['nom']:<15} {en_minutes(seconde)}")
-    print(f"Profondeur moyenne : {profondeur_moyenne:.1f} ({palier_moyen})".replace(".", ","))
+    print(f"Profondeur moyenne : {p_moyenne:.1f} ({palier_moyen})".replace(".", ","))
     print()
     print(f"Premier Réveil possible (R ≥ 1) : {en_minutes(premiere_seconde(lignes, 'reminiscences', 1))}")
     print(f"Fragments gagnés dans la nuit : {grand_nombre(fin['fragments_total'])}")
@@ -440,32 +475,65 @@ def afficher_resume(lignes, balance, profil, graine, duree_calcul_s, chemin_csv)
 # ---------------------------------------------------------------------------
 
 
+def charger_balance(chemin):
+    """Lit un fichier de valeurs comme data/balance.json."""
+    # json.load transforme le texte du fichier en dictionnaires et listes
+    # Python, que les fonctions lisent ensuite avec des crochets.
+    with open(chemin, encoding="utf-8") as fichier:
+        return json.load(fichier)
+
+
+def appliquer_intervalle_obstacles(balance, intervalle):
+    """Remplace l'intervalle entre obstacles lu dans balance.json par celui
+    de l'option --obstacles, si elle est donnée. Le fichier n'est pas modifié :
+    seule la copie chargée en mémoire change."""
+    if intervalle is None:
+        return  # option absente : on garde les valeurs du fichier
+    minimum, maximum = intervalle  # une liste de 2 valeurs, rangées dans 2 variables
+    if minimum < PAS_S or maximum < minimum:
+        raise ValueError(f"--obstacles {minimum:g} {maximum:g} : il faut {PAS_S} ≤ MIN ≤ MAX.")
+    balance["obstacles"]["intervalle_min_s"] = minimum
+    balance["obstacles"]["intervalle_max_s"] = maximum
+
+
 def lire_arguments():
     """Lit les options de la ligne de commande (toutes facultatives)."""
     parseur = argparse.ArgumentParser(description="Simule une nuit du Somnambule et écrit un CSV.")
+    parseur.add_argument("--profil", choices=list(PROFILS), default="moyen", help="profil de joueur (défaut : moyen)")
     parseur.add_argument("--duree", type=float, default=30, help="durée de la nuit en minutes (défaut : 30)")
     parseur.add_argument("--graine", type=int, default=42, help="graine du hasard (défaut : 42)")
+    parseur.add_argument(
+        "--obstacles",
+        type=float,
+        nargs=2,  # l'option attend deux nombres : --obstacles 2 5
+        metavar=("MIN", "MAX"),
+        help="intervalle entre obstacles en secondes, à la place de celui de balance.json",
+    )
     parseur.add_argument("--balance", type=Path, default=FICHIER_BALANCE, help="fichier de valeurs à utiliser")
-    parseur.add_argument("--sortie", type=Path, default=FICHIER_SORTIE, help="fichier CSV à écrire")
+    parseur.add_argument("--sortie", type=Path, help="fichier CSV à écrire (défaut : sorties/nuit_<profil>.csv)")
     return parseur.parse_args()
 
 
 def main():
     arguments = lire_arguments()
+    profil = PROFILS[arguments.profil]
+    balance = charger_balance(arguments.balance)
+    appliquer_intervalle_obstacles(balance, arguments.obstacles)
 
-    # json.load transforme le texte de balance.json en dictionnaires et
-    # listes Python, que les fonctions lisent ensuite avec des crochets.
-    with open(arguments.balance, encoding="utf-8") as fichier:
-        balance = json.load(fichier)
+    # Sans --sortie, chaque profil a son propre fichier : on peut ainsi
+    # simuler les trois profils sans écraser les résultats précédents.
+    sortie = arguments.sortie
+    if sortie is None:
+        sortie = DOSSIER_SORTIES / f"nuit_{arguments.profil}.csv"
 
     # time.perf_counter() donne l'heure précise : la différence entre deux
     # appels mesure le temps de calcul (l'issue #1 demande moins d'1 s).
     debut = time.perf_counter()
-    lignes = simuler_nuit(balance, PROFIL_MOYEN, arguments.duree * 60, arguments.graine)
+    lignes = simuler_nuit(balance, profil, arguments.duree * 60, arguments.graine)
     duree_calcul_s = time.perf_counter() - debut
 
-    ecrire_csv(lignes, arguments.sortie)
-    afficher_resume(lignes, balance, PROFIL_MOYEN, arguments.graine, duree_calcul_s, arguments.sortie)
+    ecrire_csv(lignes, sortie)
+    afficher_resume(lignes, balance, profil, arguments.graine, duree_calcul_s, sortie)
 
 
 # Ce bloc ne s'exécute que si l'on lance ce fichier directement
