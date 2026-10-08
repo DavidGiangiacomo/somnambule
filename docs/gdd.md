@@ -64,7 +64,23 @@ C'est l'équivalent du mode Rage d'Idle Slayer, avec un prix : un rêve lucide l
 
 Tout le jeu tient en trois boucles imbriquées, et la décision « toucher ou attendre » est au centre de la plus courte.
 
-&#91;embedded content: boucles de jeu · 3 niveaux\]
+**Trois boucles imbriquées : la seconde, la session, la nuit** (↺ : la boucle recommence)
+
+**Moment-à-moment · quelques secondes**
+
+Le dormeur avance seul → Un obstacle approche → **Toucher ou attendre ?** → P monte ou retombe ↺
+
+↓ *les fragments financent la session*
+
+**Session · 2 à 5 minutes**
+
+Fragments ramassés → Moutons et améliorations → Viser le palier suivant → Porte de sommeil ou rêve lucide ↺
+
+↓ *la nuit grossit jusqu'au Réveil*
+
+**Long terme · une nuit par Réveil**
+
+Fin de nuit, réveil-matin → Réveil : réminiscences → Constellation et souvenirs → Nuit suivante, nouveau rêve ↺
 
 Chaque boucle nourrit la suivante : les secondes bien jouées remplissent la session, et les sessions font grossir la nuit jusqu'au Réveil.
 
