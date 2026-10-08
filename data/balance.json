@@ -1,0 +1,52 @@
+{
+  "profondeur": {
+    "max": 100,
+    "vitesse_descente": 2,
+    "paliers": [
+      { "id": "assoupi", "nom": "Assoupi", "seuil": 0 },
+      { "id": "sommeil_leger", "nom": "Sommeil léger", "seuil": 20 },
+      { "id": "paradoxal", "nom": "Paradoxal", "seuil": 40 },
+      { "id": "profond", "nom": "Profond", "seuil": 60 },
+      { "id": "abysse", "nom": "Abysse", "seuil": 80 }
+    ]
+  },
+  "multiplicateur": {
+    "coefficient": 0.32,
+    "echelle": 10,
+    "exposant": 1.5
+  },
+  "enjambee": {
+    "fenetre_parfaite_ms": 150,
+    "cout_profondeur_pourcent": {
+      "parfaite": 3,
+      "maladroite": 15,
+      "trebuchement": 50
+    },
+    "trebuchement_perte_fragments_s": 5
+  },
+  "obstacles": {
+    "intervalle_min_s": 3,
+    "intervalle_max_s": 7
+  },
+  "fragments": {
+    "apparitions_par_seconde": 1,
+    "valeur_base": 1
+  },
+  "moutons": {
+    "doublement_tous_les": 25,
+    "liste": [
+      { "id": "mouton", "nom": "Mouton", "cout_initial": 15, "raison_cout": 1.15, "production_par_seconde": 0.1 },
+      { "id": "belier", "nom": "Bélier", "cout_initial": 100, "raison_cout": 1.13, "production_par_seconde": 1 },
+      { "id": "mouton_a_plumes", "nom": "Mouton à plumes", "cout_initial": 1100, "raison_cout": 1.11, "production_par_seconde": 8 },
+      { "id": "nuage_mouton", "nom": "Nuage-mouton", "cout_initial": 12000, "raison_cout": 1.09, "production_par_seconde": 47 }
+    ]
+  },
+  "ameliorations": [
+    { "id": "oreiller", "nom": "Oreiller", "cout_initial": 100, "raison_cout": 1.6, "effet": "vitesse_descente_pourcent", "valeur_par_niveau": 10 },
+    { "id": "couette", "nom": "Couette", "cout_initial": 150, "raison_cout": 1.6, "effet": "perte_trebuchement_points", "valeur_par_niveau": -5, "plancher": 20 },
+    { "id": "veilleuse", "nom": "Veilleuse", "cout_initial": 120, "raison_cout": 1.6, "effet": "fenetre_parfaite_ms", "valeur_par_niveau": 20 }
+  ],
+  "reminiscences": {
+    "diviseur_fragments": 1000000
+  }
+}
