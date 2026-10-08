@@ -73,6 +73,28 @@ critères de l'issue #2 :
 Les options `--duree` (120 min par défaut), `--obstacles` et `--balance`
 fonctionnent comme pour `simulateur.py`.
 
+## Vérifier le rythme visé
+
+```sh
+python3 simulateur/verifier_rythme.py
+```
+
+Vérifie, pour le profil moyen, les trois cibles du tableau « Rythme visé » du
+GDD (issue #3) :
+
+- atteindre le palier Profond la première fois en 3 à 5 min ;
+- premier Réveil possible en 15 à 20 min ;
+- nuits 2 à 10 de 10 à 15 min chacune.
+
+Pour les nuits suivantes, le script enchaîne 10 nuits : le joueur simulé se
+réveille dès que le Réveil rapporte une réminiscence, et garde toutes ses
+réminiscences (+2 % de production chacune). Chaque mesure est la moyenne de
+5 séries (option `--graines`). Les options `--duree` (60 min par défaut),
+`--obstacles` et `--balance` fonctionnent comme ailleurs.
+
+Après un changement de `data/balance.json`, lancez les deux scripts : le calage
+du rythme ne doit pas casser les critères de l'issue #2.
+
 ## Organisation du code
 
 - `formules.py` : les formules du GDD, une fonction par formule, sans rien
@@ -81,6 +103,8 @@ fonctionnent comme pour `simulateur.py`.
   cinq étapes (descente, récolte, obstacle, achats, enregistrement), puis
   l'écriture du CSV et du résumé.
 - `comparer_profils.py` : réutilise `simulateur.py` pour comparer les profils.
+- `verifier_rythme.py` : réutilise `simulateur.py` pour vérifier le rythme
+  visé, nuits suivantes comprises.
 - `.gdignore` : fichier vide qui demande à Godot d'ignorer ce dossier. Sans
   lui, Godot essaierait d'importer les CSV comme des fichiers de traduction.
 
@@ -108,13 +132,17 @@ Ce que le GDD ne précise pas et que le simulateur a dû trancher :
   5 secondes » : seuls ceux du parcours sont perdus, pas la production des
   moutons. Ils sont aussi retirés du total F qui sert à calculer R.
 - **Coût des moutons.** Dans C_n = C0·r^n, n est le nombre d'exemplaires déjà
-  possédés : le premier coûte donc le « coût de base » du GDD.
+  possédés : le premier coûte donc le « coût de base ».
+- **Réveil.** Pour enchaîner les nuits, le joueur simulé se réveille dès que
+  le réveil-matin apparaît (R ≥ 1) et ne dépense jamais ses réminiscences :
+  la Constellation n'est pas simulée. Le bonus de +2 % par réminiscence
+  s'applique à tous les gains, parcours compris.
 - **Valeurs absentes du GDD.** Fréquence des obstacles, fragments du parcours,
   raison r de chaque mouton et prix des améliorations sont inventés (détail
   dans `data/README.md`).
 
 ## Pas encore simulé
 
-Améliorations du dormeur (#17), particularités des moutons (#16), rêve
-lucide, portes, cauchemars, Réveil et nuits suivantes. Ces éléments viendront
-avec leurs issues, au fil de l'équilibrage (#3, #31, #38).
+Améliorations du dormeur (#17), particularités des moutons (#16),
+Constellation (#21), rêve lucide, portes et cauchemars. Ces éléments viendront
+avec leurs issues, au fil de l'équilibrage (#31, #38).

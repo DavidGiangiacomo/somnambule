@@ -104,10 +104,15 @@ class EtatNuit:
     moutons: dict  # nombre possédé par type, ex. {"mouton": 12, "belier": 3}
     gains_parcours_recents: list  # fragments ramassés sur le parcours, une valeur par seconde
     prochain_obstacle: float  # instant (en secondes) où arrive le prochain obstacle
+    bonus: float  # multiplicateur dû aux réminiscences gardées (1 = aucun bonus)
 
 
-def nouvelle_nuit(balance, hasard):
-    """Crée l'état du tout début d'une nuit : rien en poche, aucun mouton."""
+def nouvelle_nuit(balance, hasard, reminiscences_gardees):
+    """Crée l'état du tout début d'une nuit : rien en poche, aucun mouton.
+
+    Seules les réminiscences gardées des nuits précédentes survivent au Réveil :
+    elles donnent un bonus de production pour toute la nuit.
+    """
     # On part d'un dictionnaire vide {} et on y range 0 pour chaque type de
     # mouton déclaré dans balance.json.
     moutons = {}
@@ -122,6 +127,7 @@ def nouvelle_nuit(balance, hasard):
         moutons=moutons,
         gains_parcours_recents=[],  # [] est une liste vide
         prochain_obstacle=tirer_intervalle_obstacle(balance, hasard),
+        bonus=formules.bonus_reminiscences(reminiscences_gardees, balance),
     )
 
 
@@ -139,6 +145,12 @@ def faire_descendre(etat, balance):
 # ---------------------------------------------------------------------------
 # Étape 2 : la récolte
 # ---------------------------------------------------------------------------
+
+
+def multiplicateur_gains(etat, balance):
+    """Multiplicateur appliqué à tous les gains de fragments : M(P), la
+    profondeur, fois le bonus des réminiscences gardées."""
+    return formules.multiplicateur(etat.profondeur, balance) * etat.bonus
 
 
 def gain_parcours_de_base(balance):
@@ -161,9 +173,10 @@ def recolter(etat, balance):
     """Le dormeur ramasse des fragments sur le parcours et le troupeau produit.
 
     Tout est multiplié par M(P) : plus le dormeur est profond, plus il gagne.
+    Le bonus des réminiscences gardées s'y ajoute à partir de la deuxième nuit.
     Renvoie le gain de ce pas de temps, pour l'écrire dans le CSV.
     """
-    m = formules.multiplicateur(etat.profondeur, balance)
+    m = multiplicateur_gains(etat, balance)
     gain_parcours = gain_parcours_de_base(balance) * m * PAS_S
     gain_moutons = production_troupeau(etat, balance) * m * PAS_S
 
@@ -260,7 +273,7 @@ def delai_rentabilisation(mouton, etat, balance):
     particulièrement intéressant.
     """
     doublement = balance["moutons"]["doublement_tous_les"]
-    m = formules.multiplicateur(etat.profondeur, balance)
+    m = multiplicateur_gains(etat, balance)
     n = etat.moutons[mouton["id"]]
 
     prix = formules.cout_mouton(mouton, n)
@@ -343,8 +356,17 @@ def ligne_csv(etat, balance, gain, obstacle):
     return ligne
 
 
-def simuler_nuit(balance, profil, duree_s, graine):
-    """Simule une nuit complète et renvoie la liste des lignes du CSV."""
+# Un paramètre écrit `nom=valeur` a une valeur par défaut : on peut l'omettre
+# à l'appel. simuler_nuit(balance, profil, 1800, 42) simule donc une première
+# nuit (aucune réminiscence gardée) qui dure jusqu'au bout des 1800 s.
+def simuler_nuit(balance, profil, duree_s, graine, reminiscences_gardees=0, jusqu_au_reveil=False):
+    """Simule une nuit et renvoie la liste des lignes du CSV.
+
+    - `reminiscences_gardees` : réminiscences des nuits précédentes, qui
+      donnent un bonus de production ;
+    - `jusqu_au_reveil` : si True, la nuit s'arrête dès que le Réveil
+      rapporterait au moins une réminiscence, au lieu de durer `duree_s`.
+    """
     verifier_profil(profil)
 
     # Générateur de hasard initialisé avec une « graine » : la même graine
@@ -352,7 +374,7 @@ def simuler_nuit(balance, profil, duree_s, graine):
     # On peut ainsi comparer deux réglages de balance.json à hasard égal.
     hasard = random.Random(graine)
 
-    etat = nouvelle_nuit(balance, hasard)
+    etat = nouvelle_nuit(balance, hasard, reminiscences_gardees)
     lignes = [ligne_csv(etat, balance, gain=0.0, obstacle="")]
 
     while etat.seconde < duree_s:
@@ -363,7 +385,40 @@ def simuler_nuit(balance, profil, duree_s, graine):
         acheter_moutons(etat, balance)  # 4. achats
         lignes.append(ligne_csv(etat, balance, gain, obstacle))  # 5. on note
 
+        if jusqu_au_reveil and lignes[-1]["reminiscences"] >= 1:
+            break  # le réveil-matin sonne : le joueur se réveille
+
     return lignes
+
+
+def simuler_nuits(balance, profil, nombre_nuits, graine, duree_max_s):
+    """Enchaîne plusieurs nuits et renvoie la durée de chacune, en secondes.
+
+    Le joueur simulé se réveille dès que le Réveil rapporte au moins une
+    réminiscence. Il les garde toutes, sans rien dépenser dans la
+    Constellation : chacune ajoute donc +2 % de production aux nuits
+    suivantes. Le Réveil remet tout le reste à zéro.
+
+    Si une nuit n'atteint pas le Réveil en `duree_max_s`, la série s'arrête
+    et la liste se termine par None.
+    """
+    durees = []
+    reminiscences_gardees = 0
+    for numero in range(nombre_nuits):  # numero vaut 0, 1, ..., nombre_nuits - 1
+        # Une graine différente par nuit pour ne pas rejouer la même nuit.
+        # La première nuit garde la graine d'origine : elle est identique à
+        # celle que simule simuler_nuit seule.
+        graine_nuit = graine + 1000 * numero
+        lignes = simuler_nuit(
+            balance, profil, duree_max_s, graine_nuit, reminiscences_gardees, jusqu_au_reveil=True
+        )
+        fin = lignes[-1]
+        if fin["reminiscences"] < 1:
+            durees.append(None)
+            break  # pas de Réveil : impossible d'enchaîner la nuit suivante
+        durees.append(fin["seconde"])
+        reminiscences_gardees += fin["reminiscences"]
+    return durees
 
 
 # ---------------------------------------------------------------------------
