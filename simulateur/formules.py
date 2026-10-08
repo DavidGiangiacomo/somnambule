@@ -1,5 +1,5 @@
 """
-Formules du GDD de Somnambule.
+Formules du GDD du Somnambule (docs/gdd.md).
 
 Chaque fonction de ce fichier traduit UNE formule du document de game design.
 Elles sont « pures » : elles reçoivent des nombres, renvoient un résultat et
@@ -78,7 +78,7 @@ def cout_mouton(mouton, deja_possedes):
 
     Le premier coûte donc C0 (car r^0 = 1), puis chaque achat multiplie le
     prix par r. Avec r = 1,15, chaque mouton coûte 15 % de plus que le
-    précédent.
+    précédent. Le GDD place r entre 1,07 et 1,15 selon le mouton.
     """
     return mouton["cout_initial"] * mouton["raison_cout"] ** deja_possedes
 

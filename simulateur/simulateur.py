@@ -1,5 +1,5 @@
 """
-Simulateur d'économie de Somnambule (issue #1).
+Simulateur d'économie du Somnambule (issue #1).
 
 Il fait tourner une nuit seconde par seconde, sans aucun graphisme, pour
 répondre à la question : « avec les valeurs de data/balance.json, à quel
@@ -442,7 +442,7 @@ def afficher_resume(lignes, balance, profil, graine, duree_calcul_s, chemin_csv)
 
 def lire_arguments():
     """Lit les options de la ligne de commande (toutes facultatives)."""
-    parseur = argparse.ArgumentParser(description="Simule une nuit de Somnambule et écrit un CSV.")
+    parseur = argparse.ArgumentParser(description="Simule une nuit du Somnambule et écrit un CSV.")
     parseur.add_argument("--duree", type=float, default=30, help="durée de la nuit en minutes (défaut : 30)")
     parseur.add_argument("--graine", type=int, default=42, help="graine du hasard (défaut : 42)")
     parseur.add_argument("--balance", type=Path, default=FICHIER_BALANCE, help="fichier de valeurs à utiliser")

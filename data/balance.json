@@ -36,9 +36,9 @@
     "doublement_tous_les": 25,
     "liste": [
       { "id": "mouton", "nom": "Mouton", "cout_initial": 15, "raison_cout": 1.15, "production_par_seconde": 0.1 },
-      { "id": "belier", "nom": "Bélier", "cout_initial": 200, "raison_cout": 1.15, "production_par_seconde": 1 },
-      { "id": "mouton_a_plumes", "nom": "Mouton à plumes", "cout_initial": 3000, "raison_cout": 1.15, "production_par_seconde": 10 },
-      { "id": "nuage_mouton", "nom": "Nuage-mouton", "cout_initial": 50000, "raison_cout": 1.15, "production_par_seconde": 100 }
+      { "id": "belier", "nom": "Bélier", "cout_initial": 100, "raison_cout": 1.13, "production_par_seconde": 1 },
+      { "id": "mouton_a_plumes", "nom": "Mouton à plumes", "cout_initial": 1100, "raison_cout": 1.11, "production_par_seconde": 8 },
+      { "id": "nuage_mouton", "nom": "Nuage-mouton", "cout_initial": 12000, "raison_cout": 1.09, "production_par_seconde": 47 }
     ]
   },
   "ameliorations": [

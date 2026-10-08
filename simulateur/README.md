@@ -1,8 +1,9 @@
 # Simulateur d'économie
 
-Simule une nuit de Somnambule seconde par seconde, sans graphisme, pour
-vérifier que les formules du GDD donnent un rythme agréable avant d'écrire du
-code Godot (issue #1). Les valeurs viennent de `data/balance.json` (issue #4).
+Simule une nuit du Somnambule seconde par seconde, sans graphisme, pour
+vérifier que les formules du GDD (`docs/gdd.md`) donnent un rythme agréable
+avant d'écrire du code Godot (issue #1). Les valeurs viennent de
+`data/balance.json` (issue #4).
 
 ## Lancer
 
@@ -71,13 +72,14 @@ Ce que le GDD ne précise pas et que le simulateur a dû trancher :
 - **Achats.** Il achète le mouton qui sera remboursé le plus vite, en
   comptant le temps d'économiser pour lui. Il sait donc attendre un Bélier
   plutôt que d'acheter un Mouton devenu trop cher.
-- **Trébuchement.** Seuls les fragments ramassés sur le parcours pendant les
-  5 dernières secondes sont perdus, pas la production des moutons. Ils sont
-  aussi retirés du total qui sert à calculer R.
-- **Réminiscences.** R se calcule sur le total des fragments gagnés pendant
-  la nuit, pas sur ce qui reste en poche.
-- **Paliers.** Les seuils 0 / 20 / 40 / 60 / 80 répartissent les cinq paliers
-  régulièrement entre 0 et Pmax.
+- **Trébuchement.** Le GDD fait perdre « les fragments ramassés depuis
+  5 secondes » : seuls ceux du parcours sont perdus, pas la production des
+  moutons. Ils sont aussi retirés du total F qui sert à calculer R.
+- **Coût des moutons.** Dans C_n = C0·r^n, n est le nombre d'exemplaires déjà
+  possédés : le premier coûte donc le « coût de base » du GDD.
+- **Valeurs absentes du GDD.** Fréquence des obstacles, fragments du parcours,
+  raison r de chaque mouton et prix des améliorations sont inventés (détail
+  dans `data/README.md`).
 
 ## Pas encore simulé
 

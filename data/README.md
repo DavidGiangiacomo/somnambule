@@ -1,11 +1,13 @@
 # balance.json
 
-Source unique des valeurs d'équilibrage de Somnambule. Le simulateur
+Source unique des valeurs d'équilibrage du Somnambule. Le simulateur
 (`simulateur/`) et le jeu Godot lisent ce même fichier : un réglage validé au
 simulateur arrive tel quel dans le jeu.
 
 Le format JSON n'accepte pas les commentaires, d'où cette page. Toutes les
-valeurs sont **provisoires** jusqu'au calage de l'issue #3.
+valeurs sont **provisoires** jusqu'au calage de l'issue #3. Elles reprennent
+le GDD (`docs/gdd.md`), sauf celles que le GDD ne donne pas, signalées
+ci-dessous comme **inventées**.
 
 Conventions :
 
@@ -28,6 +30,10 @@ M(P) = 1 + `coefficient` · (P / `echelle`)^`exposant`, soit
 1 + 0,32·(P/10)^1,5 dans le GDD. Il multiplie tous les gains de fragments.
 Utilisé par le simulateur.
 
+Le tableau des paliers du GDD annonce ×5,6 à P = 60 et ×8,1 à P = 80, alors que
+la formule donne 5,7 et 8,2 (les autres valeurs concordent). Le simulateur suit
+la formule.
+
 ## enjambee
 
 | Champ | Sens | Simulateur |
@@ -40,13 +46,14 @@ Utilisé par le simulateur.
 
 Temps entre deux obstacles, tiré au hasard entre `intervalle_min_s` et
 `intervalle_max_s`. Utilisé par le simulateur, qui avance seconde par seconde :
-garder `intervalle_min_s` ≥ 1.
+garder `intervalle_min_s` ≥ 1. Valeurs **inventées** : le GDD demande
+seulement des « obstacles assez fréquents ».
 
 ## fragments
 
 Fragments flottant sur le parcours : `apparitions_par_seconde` fragments par
 seconde en moyenne, chacun valant `valeur_base` × M(P). Utilisé par le
-simulateur.
+simulateur. Valeurs **inventées**.
 
 ## moutons
 
@@ -56,6 +63,12 @@ simulateur.
 | `liste[].cout_initial` | C0, prix du premier exemplaire | oui |
 | `liste[].raison_cout` | r : le n-ième exemplaire coûte C0·r^n | oui |
 | `liste[].production_par_seconde` | fragments par seconde d'un exemplaire, avant M(P) | oui |
+
+Coûts de base et productions viennent du tableau du troupeau du GDD. Pour
+`raison_cout`, le GDD dit seulement « entre 1,07 et 1,15 selon le mouton, les
+plus chers croissent le plus lentement » : les valeurs 1,15 / 1,13 / 1,11 /
+1,09 sont **inventées**, en gardant 1,08 et 1,07 pour le Troupeau céleste et
+le Berger de la Lune (issue #31).
 
 Les particularités (le Bélier casse un obstacle par minute, le Mouton à
 plumes ramasse les fragments hors de portée, le Nuage-mouton produit ×2 en
@@ -72,8 +85,8 @@ modifie, `valeur_par_niveau` de combien par niveau :
   niveau, sans descendre sous `plancher` (20 %) ;
 - `fenetre_parfaite_ms` : +20 ms de fenêtre parfaite par niveau.
 
-Les effets viennent du GDD ; les prix sont inventés. **Le simulateur ne les
-utilise pas encore.**
+Les effets viennent du GDD ; les prix sont **inventés**. **Le simulateur ne
+les utilise pas encore.**
 
 ## reminiscences
 
