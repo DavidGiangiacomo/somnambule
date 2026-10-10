@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scripts/runner.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/generateur_obstacles.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/dormeur.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/jauge_profondeur.gd" id="4"]
 
 [sub_resource type="RectangleShape2D" id="forme_dormeur"]
 size = Vector2(80, 160)
@@ -10,65 +11,67 @@ size = Vector2(80, 160)
 [node name="Runner" type="Node2D"]
 script = ExtResource("1")
 
-[node name="Ciel" type="ColorRect" parent="."]
+[node name="Decor" type="Node2D" parent="."]
+
+[node name="Ciel" type="ColorRect" parent="Decor"]
 offset_right = 1080.0
 offset_bottom = 1152.0
 mouse_filter = 2
-color = Color(0.09, 0.1, 0.18, 1)
+color = Color(0.26, 0.32, 0.52, 1)
 
-[node name="PlanLointain" type="Parallax2D" parent="."]
+[node name="PlanLointain" type="Parallax2D" parent="Decor"]
 scroll_scale = Vector2(0.2, 1)
 repeat_size = Vector2(1080, 0)
 
-[node name="Collines" type="Polygon2D" parent="PlanLointain"]
-color = Color(0.13, 0.14, 0.24, 1)
+[node name="Collines" type="Polygon2D" parent="Decor/PlanLointain"]
+color = Color(0.21, 0.26, 0.45, 1)
 polygon = PackedVector2Array(0, 864, 0, 640, 150, 560, 330, 660, 520, 500, 700, 620, 880, 540, 1080, 640, 1080, 864)
 
-[node name="PlanProche" type="Parallax2D" parent="."]
+[node name="PlanProche" type="Parallax2D" parent="Decor"]
 scroll_scale = Vector2(0.5, 1)
 repeat_size = Vector2(1080, 0)
 
-[node name="Armoire" type="Polygon2D" parent="PlanProche"]
-color = Color(0.18, 0.19, 0.31, 1)
+[node name="Armoire" type="Polygon2D" parent="Decor/PlanProche"]
+color = Color(0.16, 0.2, 0.38, 1)
 polygon = PackedVector2Array(80, 864, 80, 520, 260, 520, 260, 864)
 
-[node name="Commode" type="Polygon2D" parent="PlanProche"]
-color = Color(0.18, 0.19, 0.31, 1)
+[node name="Commode" type="Polygon2D" parent="Decor/PlanProche"]
+color = Color(0.16, 0.2, 0.38, 1)
 polygon = PackedVector2Array(460, 864, 460, 700, 720, 700, 720, 864)
 
-[node name="Lampadaire" type="Polygon2D" parent="PlanProche"]
-color = Color(0.18, 0.19, 0.31, 1)
+[node name="Lampadaire" type="Polygon2D" parent="Decor/PlanProche"]
+color = Color(0.16, 0.2, 0.38, 1)
 polygon = PackedVector2Array(900, 864, 900, 460, 860, 460, 880, 380, 950, 380, 970, 460, 930, 460, 930, 864)
 
-[node name="Sol" type="Parallax2D" parent="."]
+[node name="Sol" type="Parallax2D" parent="Decor"]
 repeat_size = Vector2(1080, 0)
 
-[node name="Plancher" type="Polygon2D" parent="Sol"]
-color = Color(0.16, 0.17, 0.28, 1)
+[node name="Plancher" type="Polygon2D" parent="Decor/Sol"]
+color = Color(0.13, 0.16, 0.31, 1)
 polygon = PackedVector2Array(0, 864, 1080, 864, 1080, 1152, 0, 1152)
 
-[node name="Lattes" type="Polygon2D" parent="Sol"]
-color = Color(0.3, 0.32, 0.45, 1)
+[node name="Lattes" type="Polygon2D" parent="Decor/Sol"]
+color = Color(0.3, 0.35, 0.55, 1)
 polygon = PackedVector2Array(0, 864, 6, 864, 6, 894, 0, 894)
 
-[node name="Lattes2" type="Polygon2D" parent="Sol"]
+[node name="Lattes2" type="Polygon2D" parent="Decor/Sol"]
 position = Vector2(216, 0)
-color = Color(0.3, 0.32, 0.45, 1)
+color = Color(0.3, 0.35, 0.55, 1)
 polygon = PackedVector2Array(0, 864, 6, 864, 6, 894, 0, 894)
 
-[node name="Lattes3" type="Polygon2D" parent="Sol"]
+[node name="Lattes3" type="Polygon2D" parent="Decor/Sol"]
 position = Vector2(432, 0)
-color = Color(0.3, 0.32, 0.45, 1)
+color = Color(0.3, 0.35, 0.55, 1)
 polygon = PackedVector2Array(0, 864, 6, 864, 6, 894, 0, 894)
 
-[node name="Lattes4" type="Polygon2D" parent="Sol"]
+[node name="Lattes4" type="Polygon2D" parent="Decor/Sol"]
 position = Vector2(648, 0)
-color = Color(0.3, 0.32, 0.45, 1)
+color = Color(0.3, 0.35, 0.55, 1)
 polygon = PackedVector2Array(0, 864, 6, 864, 6, 894, 0, 894)
 
-[node name="Lattes5" type="Polygon2D" parent="Sol"]
+[node name="Lattes5" type="Polygon2D" parent="Decor/Sol"]
 position = Vector2(864, 0)
-color = Color(0.3, 0.32, 0.45, 1)
+color = Color(0.3, 0.35, 0.55, 1)
 polygon = PackedVector2Array(0, 864, 6, 864, 6, 894, 0, 894)
 
 [node name="Obstacles" type="Node2D" parent="."]
@@ -91,3 +94,7 @@ polygon = PackedVector2Array(-80, 0, -80, -160, 0, -160, 0, 0)
 [node name="Forme" type="CollisionShape2D" parent="Dormeur"]
 position = Vector2(-40, -80)
 shape = SubResource("forme_dormeur")
+
+[node name="Jauge" type="Node2D" parent="."]
+position = Vector2(1050, 160)
+script = ExtResource("4")
