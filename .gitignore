@@ -1,0 +1,17 @@
+# Godot 4
+.godot/
+/android/
+
+# Exports (APK, AAB) : on les reconstruit depuis l'éditeur
+/build/*
+!/build/.gdignore
+*.apk
+*.aab
+*.idsig
+
+# Clés de signature : ne jamais les versionner
+*.keystore
+*.jks
+
+# IDE
+.idea/
