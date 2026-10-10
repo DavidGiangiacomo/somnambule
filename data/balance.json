@@ -24,6 +24,9 @@
     },
     "trebuchement_perte_fragments_s": 5
   },
+  "defilement": {
+    "vitesse_px_s": 400
+  },
   "obstacles": {
     "intervalle_min_s": 5,
     "intervalle_max_s": 10

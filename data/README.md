@@ -46,6 +46,14 @@ la formule.
 | `cout_profondeur_pourcent` | part de P perdue selon l'issue de l'enjambée | oui |
 | `trebuchement_perte_fragments_s` | un trébuchement fait perdre les fragments ramassés sur le parcours pendant ces dernières secondes | oui |
 
+## defilement
+
+`vitesse_px_s` : vitesse à laquelle le décor défile sous le dormeur, en pixels
+par seconde, dans l'écran de référence large de 1080 pixels. Elle fixe le
+temps pendant lequel on voit venir un obstacle. Valeur **inventée**, reprise
+de la maquette de l'issue #6. Le simulateur ne l'utilise pas : il compte les
+obstacles en secondes, pas en pixels.
+
 ## obstacles
 
 Temps entre deux obstacles, tiré au hasard entre `intervalle_min_s` et

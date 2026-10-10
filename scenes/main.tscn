@@ -1,5 +1,8 @@
 [gd_scene format=3]
 
+[ext_resource type="PackedScene" path="res://scenes/runner.tscn" id="1"]
+[ext_resource type="Script" path="res://scripts/affichage_ips.gd" id="2"]
+
 [node name="Main" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -8,23 +11,29 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Fond" type="ColorRect" parent="."]
+[node name="Panneau" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.09, 0.1, 0.18, 1)
+mouse_filter = 2
+color = Color(0.13, 0.13, 0.16, 1)
 
-[node name="Titre" type="Label" parent="."]
+[node name="Runner" parent="." instance=ExtResource("1")]
+
+[node name="Ips" type="Label" parent="."]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 1
+anchor_left = 1.0
 anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_font_sizes/font_size = 96
-text = "Le Somnambule"
-horizontal_alignment = 1
-vertical_alignment = 1
+offset_left = -260.0
+offset_top = 30.0
+offset_right = -30.0
+offset_bottom = 90.0
+grow_horizontal = 0
+theme_override_font_sizes/font_size = 40
+text = "0 i/s"
+horizontal_alignment = 2
+script = ExtResource("2")
