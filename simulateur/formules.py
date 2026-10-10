@@ -111,3 +111,14 @@ def reminiscences(fragments_total, balance):
     """
     diviseur = balance["reminiscences"]["diviseur_fragments"]
     return math.floor(math.sqrt(fragments_total / diviseur))
+
+
+def bonus_reminiscences(reminiscences_gardees, balance):
+    """Renvoie le multiplicateur de production dû aux réminiscences gardées.
+
+    Règle du GDD : chaque réminiscence non dépensée donne +2 % de production
+    globale. Avec 5 réminiscences gardées : 1 + 5 × 2 / 100 = 1,10, soit +10 %.
+    Sans réminiscence (première nuit), le multiplicateur vaut 1 : pas de bonus.
+    """
+    pourcent = balance["reminiscences"]["bonus_production_pourcent"]
+    return 1 + reminiscences_gardees * pourcent / 100

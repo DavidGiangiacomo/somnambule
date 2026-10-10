@@ -4,10 +4,14 @@ Source unique des valeurs d'équilibrage du Somnambule. Le simulateur
 (`simulateur/`) et le jeu Godot lisent ce même fichier : un réglage validé au
 simulateur arrive tel quel dans le jeu.
 
-Le format JSON n'accepte pas les commentaires, d'où cette page. Toutes les
-valeurs sont **provisoires** jusqu'au calage de l'issue #3. Elles reprennent
-le GDD (`docs/gdd.md`), sauf celles que le GDD ne donne pas, signalées
-ci-dessous comme **inventées**.
+Le format JSON n'accepte pas les commentaires, d'où cette page. Les valeurs
+reprennent le GDD (`docs/gdd.md`), sauf celles que le GDD ne donne pas,
+signalées ci-dessous comme **inventées**, et celles que le calage de
+l'issue #3 a modifiées, signalées comme **calées**. Le détail de chaque
+changement est dans l'issue #3.
+
+Après une modification, vérifiez les cibles du GDD avec
+`simulateur/verifier_rythme.py` et `simulateur/comparer_profils.py`.
 
 Conventions :
 
@@ -21,7 +25,7 @@ Conventions :
 | Champ | Sens | Simulateur |
 |---|---|---|
 | `max` | Pmax, profondeur maximale | oui |
-| `vitesse_descente` | v dans dP/dt = v·(1 − P/Pmax), en points de P par seconde | oui |
+| `vitesse_descente` | v dans dP/dt = v·(1 − P/Pmax), en points de P par seconde. **Calée** à 1,5 (GDD : 2) pour atteindre Profond en 3 à 5 min | oui |
 | `paliers` | Assoupi → Abysse. `seuil` : P à partir de laquelle on entre dans le palier. Rangés du moins au plus profond | oui |
 
 ## multiplicateur
@@ -46,8 +50,10 @@ la formule.
 
 Temps entre deux obstacles, tiré au hasard entre `intervalle_min_s` et
 `intervalle_max_s`. Utilisé par le simulateur, qui avance seconde par seconde :
-garder `intervalle_min_s` ≥ 1. Valeurs **inventées** : le GDD demande
-seulement des « obstacles assez fréquents ».
+garder `intervalle_min_s` ≥ 1. Le GDD demande seulement des « obstacles
+assez fréquents » : 5 à 10 s est un choix de design fait pendant le calage
+(#3), qui garde le rapport de vitesse attentif / idle pur de l'issue #2 proche
+de sa cible.
 
 ## fragments
 
@@ -64,8 +70,10 @@ simulateur. Valeurs **inventées**.
 | `liste[].raison_cout` | r : le n-ième exemplaire coûte C0·r^n | oui |
 | `liste[].production_par_seconde` | fragments par seconde d'un exemplaire, avant M(P) | oui |
 
-Coûts de base et productions viennent du tableau du troupeau du GDD. Pour
-`raison_cout`, le GDD dit seulement « entre 1,07 et 1,15 selon le mouton, les
+Les productions viennent du tableau du troupeau du GDD. Les coûts de base
+sont **calés** au double de ceux du GDD (30 / 200 / 2 200 / 24 000 au lieu de
+15 / 100 / 1 100 / 12 000) pour que le premier Réveil arrive en 15 à 20 min.
+Pour `raison_cout`, le GDD dit seulement « entre 1,07 et 1,15 selon le mouton, les
 plus chers croissent le plus lentement » : les valeurs 1,15 / 1,13 / 1,11 /
 1,09 sont **inventées**, en gardant 1,08 et 1,07 pour le Troupeau céleste et
 le Berger de la Lune (issue #31).
@@ -90,5 +98,7 @@ les utilise pas encore.**
 
 ## reminiscences
 
-R = ⌊√(F / `diviseur_fragments`)⌋, où F est le total des fragments gagnés
-pendant la nuit. Utilisé par le simulateur.
+| Champ | Sens | Simulateur |
+|---|---|---|
+| `diviseur_fragments` | R = ⌊√(F / `diviseur_fragments`)⌋, où F est le total des fragments gagnés pendant la nuit | oui |
+| `bonus_production_pourcent` | bonus de production globale par réminiscence gardée (non dépensée) | oui |
