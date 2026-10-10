@@ -43,6 +43,7 @@ la formule.
 | Champ | Sens | Simulateur |
 |---|---|---|
 | `fenetre_parfaite_ms` | durée de la fenêtre d'enjambée parfaite avant l'obstacle | non (le simulateur tire l'issue au hasard selon le profil de joueur) |
+| `tolerance_retard_ms` | après le contact avec l'obstacle, délai pendant lequel un toucher sauve encore le dormeur (enjambée maladroite). Valeur **inventée** | non |
 | `cout_profondeur_pourcent` | part de P perdue selon l'issue de l'enjambée | oui |
 | `trebuchement_perte_fragments_s` | un trébuchement fait perdre les fragments ramassés sur le parcours pendant ces dernières secondes | oui |
 
