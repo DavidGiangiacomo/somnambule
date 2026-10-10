@@ -44,6 +44,17 @@ func _process(delta: float) -> void:
 			_reserve.append(obstacle)
 
 
+## Renvoie l'obstacle le plus proche à droite de x_min, ou null s'il n'y en a pas.
+func prochain(x_min: float) -> Area2D:
+	var plus_proche: Area2D = null
+	for obstacle in _actifs:
+		if obstacle.position.x < x_min:
+			continue
+		if plus_proche == null or obstacle.position.x < plus_proche.position.x:
+			plus_proche = obstacle
+	return plus_proche
+
+
 func _sur_minuteur() -> void:
 	# Si la réserve est vide (intervalles très courts), on l'agrandit.
 	var obstacle: Area2D = _reserve.pop_back() if not _reserve.is_empty() else _creer_obstacle()

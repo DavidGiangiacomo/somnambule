@@ -17,6 +17,7 @@
   },
   "enjambee": {
     "fenetre_parfaite_ms": 150,
+    "tolerance_retard_ms": 100,
     "cout_profondeur_pourcent": {
       "parfaite": 3,
       "maladroite": 15,
