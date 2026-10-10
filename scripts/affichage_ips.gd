@@ -1,5 +1,6 @@
 extends Label
-## Images par seconde, affichées seulement dans les builds de débogage.
+## Images par seconde et nombre de nœuds, affichés seulement dans les builds de
+## débogage. Un nombre de nœuds qui grimpe trahit des objets jamais libérés.
 
 
 func _ready() -> void:
@@ -8,4 +9,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	text = "%d i/s" % Engine.get_frames_per_second()
+	text = "%d i/s · %d nœuds" % [
+		Engine.get_frames_per_second(),
+		Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
+	]

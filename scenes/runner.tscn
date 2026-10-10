@@ -1,6 +1,11 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/runner.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/generateur_obstacles.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/dormeur.gd" id="3"]
+
+[sub_resource type="RectangleShape2D" id="forme_dormeur"]
+size = Vector2(80, 160)
 
 [node name="Runner" type="Node2D"]
 script = ExtResource("1")
@@ -66,7 +71,23 @@ position = Vector2(864, 0)
 color = Color(0.3, 0.32, 0.45, 1)
 polygon = PackedVector2Array(0, 864, 6, 864, 6, 894, 0, 894)
 
-[node name="Dormeur" type="Polygon2D" parent="."]
+[node name="Obstacles" type="Node2D" parent="."]
+position = Vector2(0, 864)
+script = ExtResource("2")
+
+[node name="Minuteur" type="Timer" parent="Obstacles"]
+one_shot = true
+
+[node name="Dormeur" type="Area2D" parent="."]
 position = Vector2(216, 864)
+collision_mask = 2
+monitorable = false
+script = ExtResource("3")
+
+[node name="Corps" type="Polygon2D" parent="Dormeur"]
 color = Color(0.9, 0.9, 1, 1)
 polygon = PackedVector2Array(-80, 0, -80, -160, 0, -160, 0, 0)
+
+[node name="Forme" type="CollisionShape2D" parent="Dormeur"]
+position = Vector2(-40, -80)
+shape = SubResource("forme_dormeur")
