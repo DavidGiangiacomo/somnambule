@@ -4,6 +4,9 @@
 [ext_resource type="Script" path="res://scripts/generateur_obstacles.gd" id="2"]
 [ext_resource type="Script" path="res://scripts/dormeur.gd" id="3"]
 [ext_resource type="Script" path="res://scripts/jauge_profondeur.gd" id="4"]
+[ext_resource type="PackedScene" path="res://scenes/obstacle.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://scenes/fragment.tscn" id="6"]
+[ext_resource type="Script" path="res://scripts/generateur_fragments.gd" id="7"]
 
 [sub_resource type="RectangleShape2D" id="forme_dormeur"]
 size = Vector2(80, 160)
@@ -77,9 +80,18 @@ polygon = PackedVector2Array(0, 864, 6, 864, 6, 894, 0, 894)
 [node name="Obstacles" type="Node2D" parent="."]
 position = Vector2(0, 864)
 script = ExtResource("2")
+scene = ExtResource("5")
 
 [node name="Minuteur" type="Timer" parent="Obstacles"]
 one_shot = true
+
+[node name="Fragments" type="Node2D" parent="."]
+position = Vector2(0, 864)
+script = ExtResource("7")
+scene = ExtResource("6")
+taille_reserve = 4
+
+[node name="Minuteur" type="Timer" parent="Fragments"]
 
 [node name="Dormeur" type="Area2D" parent="."]
 position = Vector2(216, 864)
@@ -95,6 +107,23 @@ polygon = PackedVector2Array(-80, 0, -80, -160, 0, -160, 0, 0)
 position = Vector2(-40, -80)
 shape = SubResource("forme_dormeur")
 
+[node name="Ramassage" type="Area2D" parent="Dormeur"]
+collision_layer = 0
+collision_mask = 4
+monitorable = false
+
+[node name="Forme" type="CollisionShape2D" parent="Dormeur/Ramassage"]
+position = Vector2(-40, -80)
+shape = SubResource("forme_dormeur")
+
 [node name="Jauge" type="Node2D" parent="."]
 position = Vector2(1050, 160)
 script = ExtResource("4")
+
+[node name="Compteur" type="Label" parent="."]
+offset_left = 40.0
+offset_top = 120.0
+offset_right = 700.0
+offset_bottom = 200.0
+theme_override_font_sizes/font_size = 56
+text = "0"
