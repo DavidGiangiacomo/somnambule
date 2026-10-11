@@ -12,6 +12,9 @@
 [sub_resource type="RectangleShape2D" id="forme_dormeur"]
 size = Vector2(80, 160)
 
+[sub_resource type="RectangleShape2D" id="forme_hors_de_portee"]
+size = Vector2(80, 380)
+
 [node name="Runner" type="Node2D"]
 script = ExtResource("1")
 
@@ -94,6 +97,22 @@ taille_reserve = 4
 
 [node name="Minuteur" type="Timer" parent="Fragments"]
 
+[node name="FragmentsHauts" type="Node2D" parent="."]
+position = Vector2(0, 864)
+script = ExtResource("7")
+cle_rythme = "hors_de_portee_par_seconde"
+hauteur_min = 330.0
+hauteur_max = 400.0
+scene = ExtResource("6")
+taille_reserve = 2
+
+[node name="Minuteur" type="Timer" parent="FragmentsHauts"]
+
+[node name="Eclat" type="Polygon2D" parent="."]
+visible = false
+color = Color(1, 0.95, 0.8, 1)
+polygon = PackedVector2Array(-40, -40, 40, -40, 40, 40, -40, 40)
+
 [node name="Dormeur" type="Area2D" parent="."]
 position = Vector2(216, 864)
 collision_mask = 2
@@ -116,6 +135,15 @@ monitorable = false
 [node name="Forme" type="CollisionShape2D" parent="Dormeur/Ramassage"]
 position = Vector2(-40, -80)
 shape = SubResource("forme_dormeur")
+
+[node name="RamassageHaut" type="Area2D" parent="Dormeur"]
+collision_layer = 0
+collision_mask = 4
+monitorable = false
+
+[node name="Forme" type="CollisionShape2D" parent="Dormeur/RamassageHaut"]
+position = Vector2(-40, -410)
+shape = SubResource("forme_hors_de_portee")
 
 [node name="Jauge" type="Node2D" parent="."]
 position = Vector2(1050, 160)

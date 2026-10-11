@@ -70,6 +70,11 @@ Fragments flottant sur le parcours : `apparitions_par_seconde` fragments par
 seconde en moyenne, chacun valant `valeur_base` × M(P). Utilisé par le
 simulateur. Valeurs **inventées**.
 
+`hors_de_portee_par_seconde` : fragments qui passent trop haut pour le
+dormeur, en plus des précédents. Ils ne sont ramassés que si le troupeau
+compte un mouton qui s'en charge (voir `ramasse_hors_de_portee`). Valeur
+**inventée**. Le simulateur ne les compte pas.
+
 ## moutons
 
 | Champ | Sens | Simulateur |
@@ -87,9 +92,15 @@ plus chers croissent le plus lentement » : les valeurs 1,15 / 1,13 / 1,11 /
 1,09 sont **inventées**, en gardant 1,08 et 1,07 pour le Troupeau céleste et
 le Berger de la Lune (issue #31).
 
-Les particularités (le Bélier casse un obstacle par minute, le Mouton à
-plumes ramasse les fragments hors de portée, le Nuage-mouton produit ×2 en
-Paradoxal) ne sont pas encore décrites ici : elles arriveront avec l'issue #16.
+Les particularités du GDD sont des champs facultatifs de la fiche du mouton.
+Elles s'appliquent dès qu'on possède un exemplaire, et ne se cumulent pas
+avec le nombre d'exemplaires. **Le simulateur ne les utilise pas encore.**
+
+| Champ | Sens |
+|---|---|
+| `casse_obstacle_toutes_les_s` | le troupeau casse l'obstacle qui approche, au plus une fois toutes les N secondes (Bélier : 60) |
+| `ramasse_hors_de_portee` | le troupeau ramasse les fragments hors de portée du dormeur (Mouton à plumes) |
+| `bonus_palier`, `bonus_multiplicateur` | la production de ce mouton est multipliée à partir du palier de sommeil indiqué (Nuage-mouton : ×2 en Paradoxal et au-delà) |
 
 ## ameliorations
 

@@ -47,3 +47,34 @@ func test_les_paliers_sont_ranges_du_moins_au_plus_profond() -> void:
 	for i in range(1, paliers.size()):
 		assert_gt(paliers[i]["seuil"], paliers[i - 1]["seuil"])
 	assert_lt(paliers[-1]["seuil"], _balance["profondeur"]["max"])
+
+
+func test_les_fragments_hors_de_portee_ont_un_rythme() -> void:
+	assert_gt(_balance["fragments"]["hors_de_portee_par_seconde"], 0.0)
+
+
+func test_chaque_mouton_a_un_prix_et_une_production() -> void:
+	var identifiants := {}
+	for fiche in _balance["moutons"]["liste"]:
+		assert_gt(fiche["cout_initial"], 0.0, fiche["id"])
+		assert_gt(fiche["raison_cout"], 1.0, fiche["id"])
+		assert_gt(fiche["production_par_seconde"], 0.0, fiche["id"])
+		assert_does_not_have(identifiants, fiche["id"], "identifiant en double")
+		identifiants[fiche["id"]] = true
+	assert_gt(_balance["moutons"]["doublement_tous_les"], 0.0)
+
+
+func test_les_moutons_sont_ranges_du_moins_cher_au_plus_cher() -> void:
+	var liste: Array = _balance["moutons"]["liste"]
+	for i in range(1, liste.size()):
+		assert_gt(liste[i]["cout_initial"], liste[i - 1]["cout_initial"])
+
+
+func test_un_bonus_de_palier_designe_un_palier_qui_existe() -> void:
+	var paliers := {}
+	for palier in _balance["profondeur"]["paliers"]:
+		paliers[palier["id"]] = true
+	for fiche in _balance["moutons"]["liste"]:
+		if fiche.has("bonus_palier"):
+			assert_has(paliers, fiche["bonus_palier"], fiche["id"])
+			assert_gt(fiche["bonus_multiplicateur"], 1.0, fiche["id"])
