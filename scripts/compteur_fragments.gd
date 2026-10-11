@@ -11,7 +11,7 @@ func _ready() -> void:
 
 
 func _sur_fragments_changes(fragments: float) -> void:
-	text = "%d" % floori(fragments)
+	text = Nombres.court(fragments)
 
 
 func _sur_fragments_perdus(_montant: float) -> void:
