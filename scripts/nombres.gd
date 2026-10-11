@@ -41,6 +41,16 @@ static func court(valeur: float) -> String:
 	return _avec_suite(mantisse, "e%d" % exposant)
 
 
+## Écrit un débit par seconde : une décimale tant qu'il est petit (« 0,1 »,
+## « 12,3 »), le format court à partir de 100.
+static func debit(valeur: float) -> String:
+	if valeur >= 100.0:
+		return court(valeur)
+	var dixiemes := floori(valeur * 10.0 + 1e-9)
+	@warning_ignore("integer_division")
+	return "%d,%d" % [dixiemes / 10, dixiemes % 10]
+
+
 ## Écrit `mantisse` avec une décimale suivie de `suite`, ou sans décimale si
 ## le tout dépasse LONGUEUR_MAX : « 12,3 k » mais « 123 k ».
 static func _avec_suite(mantisse: float, suite: String) -> String:

@@ -67,3 +67,16 @@ func test_jamais_plus_de_six_caracteres() -> void:
 			if texte.length() > Nombres.LONGUEUR_MAX:
 				trop_longs.append("%s → « %s »" % [valeur, texte])
 	assert_eq(trop_longs, [] as Array[String])
+
+
+func test_un_petit_debit_garde_une_decimale() -> void:
+	assert_eq(Nombres.debit(0.0), "0,0")
+	assert_eq(Nombres.debit(0.1), "0,1")
+	assert_eq(Nombres.debit(0.3), "0,3")
+	assert_eq(Nombres.debit(12.34), "12,3")
+	assert_eq(Nombres.debit(99.99), "99,9")
+
+
+func test_un_grand_debit_passe_au_format_court() -> void:
+	assert_eq(Nombres.debit(100.0), "100")
+	assert_eq(Nombres.debit(1234.0), "1,2" + E + "k")

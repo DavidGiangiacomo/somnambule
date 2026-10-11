@@ -123,22 +123,46 @@ func test_un_trebuchement_annonce_le_montant_perdu() -> void:
 # --- Sauvegarde ---
 
 
-func test_la_sauvegarde_contient_fragments_et_profondeur() -> void:
+func test_la_sauvegarde_contient_fragments_profondeur_et_troupeau() -> void:
 	_etat.fragments = 123.5
 	_etat.profondeur = 42.0
-	assert_eq(_etat.vers_sauvegarde(), {"fragments": 123.5, "profondeur": 42.0})
+	_etat.moutons["mouton"] = 3
+	var donnees: Dictionary = _etat.vers_sauvegarde()
+	assert_eq(donnees["fragments"], 123.5)
+	assert_eq(donnees["profondeur"], 42.0)
+	assert_eq(donnees["moutons"]["mouton"], 3)
 
 
 func test_on_retrouve_la_partie_sauvegardee() -> void:
-	_etat.depuis_sauvegarde({"fragments": 123.5, "profondeur": 42.0})
+	_etat.depuis_sauvegarde({"fragments": 123.5, "profondeur": 42.0, "moutons": {"mouton": 3}})
 	assert_eq(_etat.fragments, 123.5)
 	assert_eq(_etat.profondeur, 42.0)
+	assert_eq(_etat.moutons["mouton"], 3)
+
+
+## Le JSON rend les entiers sous forme de nombres à virgule.
+func test_le_troupeau_sauvegarde_redevient_un_nombre_entier() -> void:
+	_etat.depuis_sauvegarde({"moutons": {"mouton": 3.0}})
+	assert_typeof(_etat.moutons["mouton"], TYPE_INT)
+
+
+func test_le_chargement_annonce_le_troupeau_par_signal() -> void:
+	watch_signals(_etat)
+	_etat.depuis_sauvegarde({"moutons": {"mouton": 3}})
+	assert_signal_emitted_with_parameters(_etat, "troupeau_change", ["mouton", 3], 0)
 
 
 func test_un_champ_absent_de_la_sauvegarde_repart_de_zero() -> void:
 	_etat.depuis_sauvegarde({})
 	assert_eq(_etat.fragments, 0.0)
 	assert_eq(_etat.profondeur, 0.0)
+	for id: String in _etat.moutons:
+		assert_eq(_etat.moutons[id], 0)
+
+
+func test_un_mouton_inconnu_dans_la_sauvegarde_est_ignore() -> void:
+	_etat.depuis_sauvegarde({"moutons": {"licorne": 5}})
+	assert_does_not_have(_etat.moutons, "licorne")
 
 
 func test_une_profondeur_sauvegardee_hors_bornes_est_ramenee_dans_les_bornes() -> void:

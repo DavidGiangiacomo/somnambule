@@ -34,15 +34,16 @@
   },
   "fragments": {
     "apparitions_par_seconde": 1,
+    "hors_de_portee_par_seconde": 0.25,
     "valeur_base": 1
   },
   "moutons": {
     "doublement_tous_les": 25,
     "liste": [
       { "id": "mouton", "nom": "Mouton", "cout_initial": 30, "raison_cout": 1.15, "production_par_seconde": 0.1 },
-      { "id": "belier", "nom": "Bélier", "cout_initial": 200, "raison_cout": 1.13, "production_par_seconde": 1 },
-      { "id": "mouton_a_plumes", "nom": "Mouton à plumes", "cout_initial": 2200, "raison_cout": 1.11, "production_par_seconde": 8 },
-      { "id": "nuage_mouton", "nom": "Nuage-mouton", "cout_initial": 24000, "raison_cout": 1.09, "production_par_seconde": 47 }
+      { "id": "belier", "nom": "Bélier", "cout_initial": 200, "raison_cout": 1.13, "production_par_seconde": 1, "casse_obstacle_toutes_les_s": 60 },
+      { "id": "mouton_a_plumes", "nom": "Mouton à plumes", "cout_initial": 2200, "raison_cout": 1.11, "production_par_seconde": 8, "ramasse_hors_de_portee": true },
+      { "id": "nuage_mouton", "nom": "Nuage-mouton", "cout_initial": 24000, "raison_cout": 1.09, "production_par_seconde": 47, "bonus_palier": "paradoxal", "bonus_multiplicateur": 2 }
     ]
   },
   "ameliorations": [
