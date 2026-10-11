@@ -10,6 +10,18 @@ static func variation_profondeur(p: float, duree_s: float) -> float:
 	return profondeur["vitesse_descente"] * (1.0 - p / profondeur["max"]) * duree_s
 
 
+## Palier de sommeil (Assoupi, Paradoxal…) correspondant à la profondeur P,
+## tel que décrit dans balance.json : { "id": …, "nom": …, "seuil": … }.
+## C'est le dernier palier dont le seuil est atteint.
+static func palier(p: float) -> Dictionary:
+	var paliers: Array = Balance.donnees()["profondeur"]["paliers"]
+	var trouve: Dictionary = paliers[0]
+	for candidat in paliers:
+		if p >= candidat["seuil"]:
+			trouve = candidat
+	return trouve
+
+
 ## Multiplicateur de gains M(P) pour une profondeur P.
 ## Formule du GDD : M(P) = 1 + 0,32 · (P / 10)^1,5
 static func multiplicateur(p: float) -> float:
