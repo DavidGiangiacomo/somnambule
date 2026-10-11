@@ -3,7 +3,9 @@ extends MarginContainer
 ## mouton. Il ne fait qu'afficher : c'est GameState qui tient les comptes et
 ## décide si un achat est possible.
 
-const HAUTEUR_BOUTON := 100.0
+# Hauteur sur un écran 16:9, le plus court prévu. Sur un écran plus haut, les
+# boutons se partagent la place libre.
+const HAUTEUR_MIN_BOUTON := 90.0
 const TAILLE_POLICE := 40
 
 var _fiches: Array  # les moutons tels que décrits dans balance.json
@@ -17,7 +19,8 @@ func _ready() -> void:
 	_fiches = Balance.donnees()["moutons"]["liste"]
 	for fiche in _fiches:
 		var bouton := Button.new()
-		bouton.custom_minimum_size.y = HAUTEUR_BOUTON
+		bouton.custom_minimum_size.y = HAUTEUR_MIN_BOUTON
+		bouton.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		bouton.focus_mode = Control.FOCUS_NONE
 		bouton.add_theme_font_size_override("font_size", TAILLE_POLICE)
 		bouton.pressed.connect(GameState.acheter_mouton.bind(fiche["id"]))
