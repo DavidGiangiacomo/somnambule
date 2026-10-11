@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/obstacle.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://scenes/fragment.tscn" id="6"]
 [ext_resource type="Script" path="res://scripts/generateur_fragments.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/compteur_fragments.gd" id="8"]
 
 [sub_resource type="RectangleShape2D" id="forme_dormeur"]
 size = Vector2(80, 160)
@@ -127,3 +128,4 @@ offset_right = 700.0
 offset_bottom = 200.0
 theme_override_font_sizes/font_size = 56
 text = "0"
+script = ExtResource("8")
