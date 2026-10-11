@@ -74,6 +74,18 @@ func ramasser_fragment() -> void:
 	fragments += gain
 
 
+## Ce qu'il faut écrire dans la sauvegarde pour retrouver la partie.
+func vers_sauvegarde() -> Dictionary:
+	return {"fragments": fragments, "profondeur": profondeur}
+
+
+## Reprend la partie décrite par une sauvegarde. Un champ absent garde sa
+## valeur de départ.
+func depuis_sauvegarde(donnees: Dictionary) -> void:
+	fragments = donnees.get("fragments", 0.0)
+	profondeur = clampf(donnees.get("profondeur", 0.0), 0.0, profondeur_max)
+
+
 ## Retire à P la part prévue pour cette issue : 3 veut dire 3 % de P.
 func _faire_payer(issue: String) -> void:
 	profondeur -= profondeur * _couts_pourcent[issue] / 100.0
