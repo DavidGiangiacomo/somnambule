@@ -9,7 +9,7 @@ extends Node
 ## Le fichier porte un numéro de version, `save_version`. Quand son format
 ## changera, _migrer() mettra les anciennes sauvegardes au format du jour.
 
-const VERSION := 1
+const VERSION := 2
 const INTERVALLE_S := 30.0
 
 ## Le fichier de sauvegarde. Les tests en choisissent un autre.
@@ -65,11 +65,12 @@ func charger() -> void:
 	etat.depuis_sauvegarde(_migrer(json.data))
 
 
-## Met une sauvegarde ancienne au format actuel. Rien à faire tant qu'il
-## n'existe qu'une version. Le jour où le format change, on ajoutera ici :
-##
-##     if donnees["save_version"] < 2:
-##         donnees["nouveau_champ"] = valeur_par_defaut
-##         donnees["save_version"] = 2
+## Met une sauvegarde ancienne au format actuel, une version après l'autre.
 func _migrer(donnees: Dictionary) -> Dictionary:
+	# Version 2 (le Réveil) : on compte désormais les fragments gagnés pendant
+	# la nuit. Une ancienne sauvegarde ne les connaît pas ; on repart de ce
+	# que le joueur a en poche, faute de mieux.
+	if donnees.get("save_version", 1) < 2:
+		donnees["fragments_de_la_nuit"] = donnees.get("fragments", 0.0)
+		donnees["save_version"] = 2
 	return donnees

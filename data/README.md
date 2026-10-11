@@ -124,4 +124,4 @@ Les effets viennent du GDD ; les prix sont **inventés**. Le jeu les applique
 | Champ | Sens | Simulateur |
 |---|---|---|
 | `diviseur_fragments` | R = ⌊√(F / `diviseur_fragments`)⌋, où F est le total des fragments gagnés pendant la nuit | oui |
-| `bonus_production_pourcent` | bonus de production globale par réminiscence gardée (non dépensée) | oui |
+| `bonus_production_pourcent` | bonus de production globale par réminiscence gardée (non dépensée). **Calé** à 10 (GDD : 2) pour que la deuxième nuit soit nettement plus rapide que la première (issue #20) | oui |

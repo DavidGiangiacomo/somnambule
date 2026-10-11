@@ -2,8 +2,8 @@ extends Node
 ## État du jeu, chargé automatiquement au démarrage sous le nom GameState
 ## (voir Projet → Paramètres du projet → Chargement automatique).
 ##
-## Il tient les ressources, le troupeau, les améliorations du dormeur et la
-## profondeur, applique les règles du jeu, et prévient l'affichage par des signaux. Les scènes ne modifient
+## Il tient les ressources, le troupeau, les améliorations du dormeur, la
+## profondeur et les réminiscences, applique les règles du jeu, et prévient l'affichage par des signaux. Les scènes ne modifient
 ## jamais ces valeurs elles-mêmes : elles disent ce qui s'est passé (« le
 ## dormeur a trébuché », « le joueur veut un mouton ») en appelant les
 ## fonctions ci-dessous.
@@ -21,6 +21,13 @@ signal troupeau_change(id: String, nombre: int)
 signal amelioration_changee(id: String, niveau: int)
 ## Le joueur vient d'acheter un mouton ou un niveau d'amélioration.
 signal achat_effectue(id: String)
+## Un Réveil rapporterait maintenant ce nombre de réminiscences.
+signal reminiscences_possibles_changees(reminiscences: int)
+## Le nombre de réminiscences gardées a changé (Réveil ou chargement).
+signal reminiscences_changees(reminiscences: int)
+## Le dormeur vient de se réveiller : `resume` décrit la nuit qui s'achève
+## (voir resume_de_la_nuit), et une nouvelle nuit commence.
+signal nuit_terminee(resume: Dictionary)
 
 var fragments := 0.0:
 	set(valeur):
@@ -32,6 +39,7 @@ var fragments := 0.0:
 var profondeur := 0.0:
 	set(valeur):
 		profondeur = valeur
+		profondeur_record = maxf(profondeur_record, profondeur)
 		profondeur_changee.emit(profondeur)
 		var nouveau_palier := Formules.palier(profondeur)
 		if nouveau_palier["id"] != palier.get("id"):
@@ -42,6 +50,35 @@ var profondeur_max: float
 
 ## Le palier de sommeil où se trouve le dormeur : { "id": …, "nom": …, "seuil": … }
 var palier: Dictionary = {}
+
+## La profondeur la plus grande atteinte pendant la nuit.
+var profondeur_record := 0.0
+
+## Total des fragments gagnés pendant la nuit, dépenses non déduites. C'est
+## lui qui décide du nombre de réminiscences au Réveil.
+var fragments_de_la_nuit := 0.0:
+	set(valeur):
+		fragments_de_la_nuit = valeur
+		var possibles := Formules.reminiscences(fragments_de_la_nuit)
+		if possibles != reminiscences_possibles:
+			reminiscences_possibles = possibles
+			reminiscences_possibles_changees.emit(possibles)
+
+## Ce qu'un Réveil rapporterait maintenant.
+var reminiscences_possibles := 0
+
+## Réminiscences gardées, gagnées aux Réveils précédents. Chacune augmente
+## toute la production.
+var reminiscences := 0:
+	set(valeur):
+		reminiscences = valeur
+		reminiscences_changees.emit(reminiscences)
+
+## Ce qu'a rapporté le Réveil précédent (0 pendant la première nuit).
+var reminiscences_derniere_nuit := 0
+
+## Numéro de la nuit en cours : 1 pour la première.
+var nuit := 1
 
 ## Nombre de moutons possédés, par identifiant : { "mouton": 3, "belier": 0… }
 var moutons: Dictionary = {}
@@ -89,11 +126,15 @@ func _process(delta: float) -> void:
 	_temps += delta
 	_recharge_casse_s = maxf(0.0, _recharge_casse_s - delta)
 	var acceleration := 1.0 + bonus_descente_pourcent() / 100.0
-	profondeur += Formules.variation_profondeur(profondeur, delta) * acceleration
+	# Bornée : après une très longue image, le calcul pourrait dépasser le maximum.
+	profondeur = minf(
+		profondeur + Formules.variation_profondeur(profondeur, delta) * acceleration,
+		profondeur_max
+	)
 
 	var gain := gains_par_seconde() * delta
 	if gain > 0.0:
-		fragments += gain
+		_gagner(gain)
 
 
 # --- Le dormeur ---
@@ -117,15 +158,16 @@ func trebucher() -> void:
 	# S'ils ont déjà été dépensés, on ne peut pas reprendre plus que le reste.
 	perte = minf(perte, fragments)
 	fragments -= perte
+	fragments_de_la_nuit -= perte
 	fragments_perdus.emit(perte)
 
 
 ## Le dormeur a ramassé un fragment : il vaut d'autant plus que P est haute.
 func ramasser_fragment() -> void:
-	var gain := _valeur_fragment * Formules.multiplicateur(profondeur)
+	var gain := _valeur_fragment * Formules.multiplicateur(profondeur) * bonus_reminiscences()
 	_oublier_ramassages_anciens()
 	_ramassages_recents.append({"temps": _temps, "gain": gain})
-	fragments += gain
+	_gagner(gain)
 
 
 # --- Le troupeau ---
@@ -166,9 +208,10 @@ func production_troupeau() -> float:
 	return total
 
 
-## Ce que le troupeau rapporte vraiment chaque seconde, à la profondeur actuelle.
+## Ce que le troupeau rapporte vraiment chaque seconde, à la profondeur
+## actuelle et avec le bonus des réminiscences.
 func gains_par_seconde() -> float:
-	return production_troupeau() * Formules.multiplicateur(profondeur)
+	return production_troupeau() * Formules.multiplicateur(profondeur) * bonus_reminiscences()
 
 
 ## Vrai si un mouton du troupeau peut casser le prochain obstacle.
@@ -237,6 +280,65 @@ func fenetre_parfaite_ms() -> float:
 	return _fenetre_parfaite_de_base_ms + _effet("fenetre_parfaite_ms")
 
 
+# --- Le Réveil ---
+
+
+## Multiplicateur de production dû aux réminiscences gardées (1 = aucun bonus).
+func bonus_reminiscences() -> float:
+	return Formules.bonus_reminiscences(reminiscences)
+
+
+func peut_se_reveiller() -> bool:
+	return reminiscences_possibles >= 1
+
+
+## Vrai quand le Réveil rapporterait au moins le double du précédent (ou au
+## moins 2 réminiscences pendant la première nuit) : le réveil-matin insiste.
+func le_reveil_sonne_fort() -> bool:
+	return reminiscences_possibles >= 2 * maxi(1, reminiscences_derniere_nuit)
+
+
+## Ce qu'il y a à dire de la nuit en cours, pour l'écran de Réveil.
+func resume_de_la_nuit() -> Dictionary:
+	return {
+		"nuit": nuit,
+		"duree_s": _temps,
+		"fragments": fragments_de_la_nuit,
+		"palier": Formules.palier(profondeur_record),
+		"reminiscences": reminiscences_possibles,
+	}
+
+
+## Le dormeur se réveille, si la nuit rapporte au moins une réminiscence :
+## elles sont gardées pour toujours, tout le reste repart de zéro et la nuit
+## suivante commence. Renvoie vrai si c'est fait.
+func se_reveiller() -> bool:
+	if not peut_se_reveiller():
+		return false
+	var resume := resume_de_la_nuit()
+
+	reminiscences_derniere_nuit = reminiscences_possibles
+	reminiscences += reminiscences_possibles
+	nuit += 1
+
+	_temps = 0.0
+	_ramassages_recents.clear()
+	_recharge_casse_s = 0.0
+	for id: String in moutons:
+		moutons[id] = 0
+		troupeau_change.emit(id, 0)
+	for id: String in ameliorations:
+		ameliorations[id] = 0
+		amelioration_changee.emit(id, 0)
+	fragments = 0.0
+	fragments_de_la_nuit = 0.0
+	profondeur = 0.0
+	profondeur_record = 0.0
+
+	nuit_terminee.emit(resume)
+	return true
+
+
 # --- La sauvegarde ---
 
 
@@ -247,6 +349,12 @@ func vers_sauvegarde() -> Dictionary:
 		"profondeur": profondeur,
 		"moutons": moutons.duplicate(),
 		"ameliorations": ameliorations.duplicate(),
+		"fragments_de_la_nuit": fragments_de_la_nuit,
+		"duree_nuit_s": _temps,
+		"profondeur_record": profondeur_record,
+		"nuit": nuit,
+		"reminiscences": reminiscences,
+		"reminiscences_derniere_nuit": reminiscences_derniere_nuit,
 	}
 
 
@@ -255,10 +363,16 @@ func vers_sauvegarde() -> Dictionary:
 func depuis_sauvegarde(donnees: Dictionary) -> void:
 	fragments = donnees.get("fragments", 0.0)
 	profondeur = clampf(donnees.get("profondeur", 0.0), 0.0, profondeur_max)
+	profondeur_record = clampf(donnees.get("profondeur_record", profondeur), profondeur, profondeur_max)
+	fragments_de_la_nuit = donnees.get("fragments_de_la_nuit", 0.0)
+	_temps = donnees.get("duree_nuit_s", 0.0)
+	# Le JSON ne connaît que les nombres à virgule : on revient à des entiers.
+	nuit = maxi(1, int(donnees.get("nuit", 1)))
+	reminiscences = maxi(0, int(donnees.get("reminiscences", 0)))
+	reminiscences_derniere_nuit = maxi(0, int(donnees.get("reminiscences_derniere_nuit", 0)))
 
 	var moutons_sauvegardes: Dictionary = donnees.get("moutons", {})
 	for id: String in moutons:
-		# Le JSON ne connaît que les nombres à virgule : on revient à un entier.
 		moutons[id] = maxi(0, int(moutons_sauvegardes.get(id, 0)))
 		troupeau_change.emit(id, moutons[id])
 
@@ -303,6 +417,12 @@ func _plancher(effet: String) -> float:
 		if fiche["effet"] == effet:
 			return fiche.get("plancher", 0.0)
 	return 0.0
+
+
+## Ajoute des fragments gagnés : au compteur et au total de la nuit.
+func _gagner(montant: float) -> void:
+	fragments += montant
+	fragments_de_la_nuit += montant
 
 
 ## Délai entre deux obstacles cassés, ou 0 si aucun mouton possédé n'en casse.

@@ -51,6 +51,20 @@ static func debit(valeur: float) -> String:
 	return "%d,%d" % [dixiemes / 10, dixiemes % 10]
 
 
+## Écrit une durée en clair : « 45 s », « 16 min 05 s », « 1 h 02 min ».
+static func duree(secondes: float) -> String:
+	var total := floori(maxf(secondes, 0.0))
+	@warning_ignore("integer_division")
+	var heures := total / 3600
+	@warning_ignore("integer_division")
+	var minutes := (total % 3600) / 60
+	if heures > 0:
+		return "%d h %02d min" % [heures, minutes]
+	if minutes > 0:
+		return "%d min %02d s" % [minutes, total % 60]
+	return "%d s" % total
+
+
 ## Écrit `mantisse` avec une décimale suivie de `suite`, ou sans décimale si
 ## le tout dépasse LONGUEUR_MAX : « 12,3 k » mais « 123 k ».
 static func _avec_suite(mantisse: float, suite: String) -> String:

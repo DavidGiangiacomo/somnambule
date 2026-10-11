@@ -43,3 +43,18 @@ static func production_moutons(mouton: Dictionary, nombre: int, doublement_tous_
 	@warning_ignore("integer_division")
 	var bonus := pow(2.0, nombre / doublement_tous_les)
 	return mouton["production_par_seconde"] * nombre * bonus
+
+
+## Nombre de réminiscences qu'un Réveil rapporterait. `fragments_de_la_nuit`
+## est le total gagné depuis le début de la nuit, dépenses non déduites.
+## Formule du GDD : R = ⌊√(F / 10⁶)⌋
+static func reminiscences(fragments_de_la_nuit: float) -> int:
+	var diviseur: float = Balance.donnees()["reminiscences"]["diviseur_fragments"]
+	return floori(sqrt(maxf(fragments_de_la_nuit, 0.0) / diviseur))
+
+
+## Multiplicateur de production dû aux réminiscences gardées : 1 sans
+## réminiscence, 1,3 avec trois réminiscences à +10 % chacune.
+static func bonus_reminiscences(reminiscences_gardees: int) -> float:
+	var pourcent: float = Balance.donnees()["reminiscences"]["bonus_production_pourcent"]
+	return 1.0 + reminiscences_gardees * pourcent / 100.0

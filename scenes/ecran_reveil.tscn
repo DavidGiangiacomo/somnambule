@@ -1,0 +1,69 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ecran_reveil.gd" id="1"]
+
+[node name="EcranReveil" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Voile" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.05, 0.1, 0.94)
+
+[node name="Marge" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 70
+theme_override_constants/margin_top = 200
+theme_override_constants/margin_right = 70
+theme_override_constants/margin_bottom = 120
+
+[node name="Colonne" type="VBoxContainer" parent="Marge"]
+layout_mode = 2
+theme_override_constants/separation = 40
+
+[node name="Titre" type="Label" parent="Marge/Colonne"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.8, 0.35, 1)
+theme_override_font_sizes/font_size = 96
+text = "Le Réveil"
+horizontal_alignment = 1
+
+[node name="Resume" type="Label" parent="Marge/Colonne"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/line_spacing = 16
+theme_override_font_sizes/font_size = 44
+text = "Nuit 1"
+autowrap_mode = 3
+
+[node name="SeReveiller" type="Button" parent="Marge/Colonne"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 52
+text = "Se réveiller"
+
+[node name="DormirEncore" type="Button" parent="Marge/Colonne"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 130)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 44
+text = "Dormir encore"
