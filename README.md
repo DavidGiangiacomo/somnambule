@@ -9,6 +9,7 @@ Jeu mobile incrémental en Godot 4 : voir le game design document
 | `scenes/` | scènes Godot (`.tscn`) |
 | `scripts/` | scripts GDScript |
 | `assets/` | images, sons, polices |
+| `shaders/` | shaders (effets visuels calculés par la carte graphique) |
 | `data/` | `balance.json`, valeurs d'équilibrage lues par le jeu et le simulateur |
 | `tests/` | tests des scripts (voir plus bas) |
 | `addons/gut/` | GUT, le framework de test (code tiers, licence MIT) |

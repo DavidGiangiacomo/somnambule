@@ -7,11 +7,20 @@ extends Node2D
 ##
 ## Le Runner ne tient aucun compte : il signale à GameState ce qui arrive au
 ## dormeur (enjambée, trébuchement, fragment ramassé) et montre ce que
-## GameState décide (décor qui fonce, obstacle cassé par le troupeau).
+## GameState décide (palier de sommeil, obstacle cassé par le troupeau).
 
-# Teinte du décor : couleurs normales à P = 0, violet profond à P maximale.
-const TEINTE_EVEIL := Color(1, 1, 1)
-const TEINTE_ABYSSE := Color(0.3, 0.22, 0.55)
+# À quoi ressemble le décor dans chaque palier de sommeil : sa teinte, du
+# bleu nuit au violet profond, et l'ampleur de son ondulation, en pixels.
+const ASPECT_DES_PALIERS := {
+	"assoupi": {"teinte": Color(1, 1, 1), "ondulation": 0.0},
+	"sommeil_leger": {"teinte": Color(0.82, 0.84, 0.97), "ondulation": 6.0},
+	"paradoxal": {"teinte": Color(0.72, 0.6, 0.95), "ondulation": 12.0},
+	"profond": {"teinte": Color(0.66, 0.4, 0.82), "ondulation": 18.0},
+	"abysse": {"teinte": Color(0.46, 0.23, 0.58), "ondulation": 26.0},
+}
+const ASPECT_PAR_DEFAUT := {"teinte": Color(1, 1, 1), "ondulation": 0.0}
+# Le décor met ce temps à glisser d'un palier à l'autre.
+const DUREE_CHANGEMENT_DE_PALIER_S := 1.0
 # Le troupeau casse l'obstacle quand il arrive à cette distance du dormeur.
 const DISTANCE_CASSE := 300.0
 # Les fragments hors de portée sont estompés tant que personne ne les ramasse.
@@ -20,6 +29,8 @@ const OPACITE_HORS_DE_PORTEE := 0.4
 var vitesse: float  # pixels par seconde
 
 @onready var decor: Node2D = $Decor
+# Le même matériau fait onduler tous les plans du décor, sauf le sol.
+@onready var ondulation: ShaderMaterial = $Decor/PlanProche.material
 @onready var dormeur: Area2D = $Dormeur
 @onready var obstacles: Generateur = $Obstacles
 @onready var generateur_fragments: Generateur = $Fragments
@@ -38,8 +49,8 @@ func _ready() -> void:
 	$Dormeur/Ramassage.area_entered.connect(_sur_fragment)
 	$Dormeur/RamassageHaut.area_entered.connect(_sur_fragment_haut)
 
-	GameState.profondeur_changee.connect(_sur_profondeur_changee)
-	_sur_profondeur_changee(GameState.profondeur)
+	GameState.palier_change.connect(_sur_palier_change)
+	_montrer_palier(GameState.palier, 0.0)
 	GameState.troupeau_change.connect(_sur_troupeau_change)
 	_sur_troupeau_change("", 0)
 	GameState.amelioration_changee.connect(_sur_amelioration_changee)
@@ -90,8 +101,20 @@ func _casser(obstacle: Area2D) -> void:
 	GameState.casser_obstacle()
 
 
-func _sur_profondeur_changee(profondeur: float) -> void:
-	decor.modulate = TEINTE_EVEIL.lerp(TEINTE_ABYSSE, profondeur / GameState.profondeur_max)
+func _sur_palier_change(palier: Dictionary) -> void:
+	_montrer_palier(palier, DUREE_CHANGEMENT_DE_PALIER_S)
+
+
+## Donne au décor la teinte et l'ondulation du palier, en `duree_s` secondes.
+func _montrer_palier(palier: Dictionary, duree_s: float) -> void:
+	var aspect: Dictionary = ASPECT_DES_PALIERS.get(palier.get("id"), ASPECT_PAR_DEFAUT)
+	if duree_s <= 0.0:
+		decor.modulate = aspect["teinte"]
+		ondulation.set_shader_parameter("amplitude", aspect["ondulation"])
+		return
+	var transition := create_tween().set_parallel()
+	transition.tween_property(decor, "modulate", aspect["teinte"], duree_s)
+	transition.tween_property(ondulation, "shader_parameter/amplitude", aspect["ondulation"], duree_s)
 
 
 func _sur_troupeau_change(_id: String, _nombre: int) -> void:

@@ -12,6 +12,9 @@ signal fragments_changes(fragments: float)
 ## Un trébuchement vient de faire s'envoler `montant` fragments.
 signal fragments_perdus(montant: float)
 signal profondeur_changee(profondeur: float)
+## Le dormeur vient d'entrer dans un autre palier de sommeil, plus profond ou
+## moins profond. `palier` est sa description dans balance.json.
+signal palier_change(palier: Dictionary)
 ## Le nombre de moutons d'un type a changé (achat ou chargement de la partie).
 signal troupeau_change(id: String, nombre: int)
 ## Une amélioration du dormeur a changé de niveau (achat ou chargement).
@@ -30,8 +33,15 @@ var profondeur := 0.0:
 	set(valeur):
 		profondeur = valeur
 		profondeur_changee.emit(profondeur)
+		var nouveau_palier := Formules.palier(profondeur)
+		if nouveau_palier["id"] != palier.get("id"):
+			palier = nouveau_palier
+			palier_change.emit(palier)
 
 var profondeur_max: float
+
+## Le palier de sommeil où se trouve le dormeur : { "id": …, "nom": …, "seuil": … }
+var palier: Dictionary = {}
 
 ## Nombre de moutons possédés, par identifiant : { "mouton": 3, "belier": 0… }
 var moutons: Dictionary = {}
@@ -57,6 +67,7 @@ var _recharge_casse_s := 0.0  # temps avant de pouvoir casser un nouvel obstacle
 func _ready() -> void:
 	var balance := Balance.donnees()
 	profondeur_max = balance["profondeur"]["max"]
+	palier = Formules.palier(profondeur)
 	_couts_pourcent = balance["enjambee"]["cout_profondeur_pourcent"]
 	_duree_perte_s = balance["enjambee"]["trebuchement_perte_fragments_s"]
 	_valeur_fragment = balance["fragments"]["valeur_base"]
