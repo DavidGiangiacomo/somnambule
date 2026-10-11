@@ -17,11 +17,12 @@ static func multiplicateur(p: float) -> float:
 	return 1.0 + m["coefficient"] * pow(p / m["echelle"], m["exposant"])
 
 
-## Prix du prochain mouton d'un type donné, quand on en possède déjà
-## `deja_possedes`. `mouton` est sa fiche dans balance.json.
+## Prix du prochain exemplaire d'un mouton, ou du prochain niveau d'une
+## amélioration, quand on en possède déjà `deja_possedes`. `fiche` est sa
+## description dans balance.json.
 ## Formule du GDD : C_n = C0 · r^n
-static func cout_mouton(mouton: Dictionary, deja_possedes: int) -> float:
-	return mouton["cout_initial"] * pow(mouton["raison_cout"], deja_possedes)
+static func cout_achat(fiche: Dictionary, deja_possedes: int) -> float:
+	return fiche["cout_initial"] * pow(fiche["raison_cout"], deja_possedes)
 
 
 ## Fragments produits par seconde par `nombre` moutons d'un même type, avant

@@ -113,8 +113,11 @@ modifie, `valeur_par_niveau` de combien par niveau :
   niveau, sans descendre sous `plancher` (20 %) ;
 - `fenetre_parfaite_ms` : +20 ms de fenêtre parfaite par niveau.
 
-Les effets viennent du GDD ; les prix sont **inventés**. **Le simulateur ne
-les utilise pas encore.**
+La Couette ne se vend plus une fois le plancher atteint. Si plusieurs
+améliorations portaient le même `effet`, leurs apports s'additionneraient.
+
+Les effets viennent du GDD ; les prix sont **inventés**. Le jeu les applique
+(issue #17) ; **le simulateur ne les utilise pas encore.**
 
 ## reminiscences
 

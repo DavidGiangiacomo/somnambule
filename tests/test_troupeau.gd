@@ -39,20 +39,20 @@ func _fiche_avec(champ: String) -> Dictionary:
 
 
 func test_le_premier_mouton_coute_son_prix_de_base() -> void:
-	assert_almost_eq(Formules.cout_mouton(_premier, 0), _premier["cout_initial"], 1e-9)
+	assert_almost_eq(Formules.cout_achat(_premier, 0), _premier["cout_initial"], 1e-9)
 
 
 func test_chaque_mouton_coute_plus_cher_que_le_precedent() -> void:
 	var attendu: float = _premier["cout_initial"] * pow(_premier["raison_cout"], 10)
-	assert_almost_eq(Formules.cout_mouton(_premier, 10), attendu, 1e-6)
-	assert_gt(Formules.cout_mouton(_premier, 11), Formules.cout_mouton(_premier, 10))
+	assert_almost_eq(Formules.cout_achat(_premier, 10), attendu, 1e-6)
+	assert_gt(Formules.cout_achat(_premier, 11), Formules.cout_achat(_premier, 10))
 
 
 ## Mêmes chiffres que simulateur/formules.py avec les valeurs calées de #3 :
 ## 30 × 1,15^10 et 0,1 × 50 × 2².
 func test_les_formules_donnent_les_chiffres_du_simulateur() -> void:
 	var mouton := {"cout_initial": 30.0, "raison_cout": 1.15, "production_par_seconde": 0.1}
-	assert_almost_eq(Formules.cout_mouton(mouton, 10), 121.36673, 1e-4)
+	assert_almost_eq(Formules.cout_achat(mouton, 10), 121.36673, 1e-4)
 	assert_almost_eq(Formules.production_moutons(mouton, 50, 25), 20.0, 1e-9)
 
 
