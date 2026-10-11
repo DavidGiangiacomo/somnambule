@@ -11,7 +11,8 @@ const TAILLE_POLICE := 40
 var _fiches: Array  # les moutons tels que décrits dans balance.json
 var _boutons: Dictionary = {}  # identifiant du mouton → son bouton
 
-@onready var gains: Label = $Colonne/Gains
+@onready var gains: Label = $Colonne/Ligne/Gains
+@onready var achat_automatique: CheckButton = $Colonne/Ligne/AchatAutomatique
 @onready var liste: VBoxContainer = $Colonne/Boutons
 
 
@@ -30,6 +31,10 @@ func _ready() -> void:
 	GameState.fragments_changes.connect(_sur_fragments_changes)
 	GameState.profondeur_changee.connect(_sur_profondeur_changee)
 	GameState.troupeau_change.connect(_sur_troupeau_change)
+	GameState.constellation_changee.connect(_sur_constellation_changee)
+	GameState.achat_automatique_change.connect(_sur_achat_automatique_change)
+	achat_automatique.toggled.connect(_sur_interrupteur_bascule)
+	_montrer_achat_automatique()
 
 	_ecrire_boutons()
 	_griser_boutons()
@@ -68,3 +73,22 @@ func _griser_boutons() -> void:
 
 func _ecrire_gains() -> void:
 	gains.text = "Troupeau : +%s par seconde" % Nombres.debit(GameState.gains_par_seconde())
+
+
+func _sur_constellation_changee(_id: String) -> void:
+	_montrer_achat_automatique()
+
+
+func _sur_achat_automatique_change(_actif: bool) -> void:
+	_montrer_achat_automatique()
+
+
+func _sur_interrupteur_bascule(actif: bool) -> void:
+	GameState.achat_automatique = actif
+
+
+## L'interrupteur n'apparaît qu'une fois l'achat automatique acquis dans la
+## Constellation.
+func _montrer_achat_automatique() -> void:
+	achat_automatique.visible = GameState.a_l_achat_automatique()
+	achat_automatique.set_pressed_no_signal(GameState.achat_automatique)
