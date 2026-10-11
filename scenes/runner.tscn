@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://scripts/compteur_fragments.gd" id="8"]
 [ext_resource type="Shader" path="res://shaders/ondulation.gdshader" id="9"]
 [ext_resource type="Script" path="res://scripts/annonce_palier.gd" id="10"]
+[ext_resource type="Script" path="res://scripts/reveil_matin.gd" id="11"]
 
 [sub_resource type="ShaderMaterial" id="ondulation"]
 shader = ExtResource("9")
@@ -177,3 +178,12 @@ theme_override_font_sizes/font_size = 72
 horizontal_alignment = 1
 vertical_alignment = 1
 script = ExtResource("10")
+
+[node name="ReveilMatin" type="Button" parent="."]
+offset_left = 30.0
+offset_top = 220.0
+offset_right = 180.0
+offset_bottom = 400.0
+focus_mode = 0
+flat = true
+script = ExtResource("11")
