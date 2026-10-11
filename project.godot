@@ -17,6 +17,7 @@ config/features=PackedStringArray("4.7", "Mobile")
 [autoload]
 
 GameState="*res://scripts/game_state.gd"
+Sauvegarde="*res://scripts/sauvegarde.gd"
 
 [display]
 
