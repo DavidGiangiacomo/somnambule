@@ -3,7 +3,7 @@ extends Node
 ## (voir Projet → Paramètres du projet → Chargement automatique).
 ##
 ## Il tient les ressources, le troupeau, les améliorations du dormeur, la
-## profondeur et les réminiscences, applique les règles du jeu, et prévient l'affichage par des signaux. Les scènes ne modifient
+## profondeur, les réminiscences et la Constellation, applique les règles du jeu, et prévient l'affichage par des signaux. Les scènes ne modifient
 ## jamais ces valeurs elles-mêmes : elles disent ce qui s'est passé (« le
 ## dormeur a trébuché », « le joueur veut un mouton ») en appelant les
 ## fonctions ci-dessous.
@@ -28,6 +28,10 @@ signal reminiscences_changees(reminiscences: int)
 ## Le dormeur vient de se réveiller : `resume` décrit la nuit qui s'achève
 ## (voir resume_de_la_nuit), et une nouvelle nuit commence.
 signal nuit_terminee(resume: Dictionary)
+## Un nœud de la Constellation vient d'être acquis (achat ou chargement).
+signal constellation_changee(id: String)
+## L'option d'achat automatique des moutons a été activée ou coupée.
+signal achat_automatique_change(actif: bool)
 
 var fragments := 0.0:
 	set(valeur):
@@ -86,6 +90,17 @@ var moutons: Dictionary = {}
 ## Niveau de chaque amélioration du dormeur : { "oreiller": 2, "couette": 0… }
 var ameliorations: Dictionary = {}
 
+## Nœuds de la Constellation acquis : { "sommeil_facile": true, … }. Ils
+## survivent aux Réveils.
+var constellation: Dictionary = {}
+
+## Le joueur laisse-t-il le jeu acheter les moutons ? Sans effet tant que le
+## nœud d'achat automatique n'est pas acquis.
+var achat_automatique := true:
+	set(valeur):
+		achat_automatique = valeur
+		achat_automatique_change.emit(achat_automatique)
+
 var _couts_pourcent: Dictionary  # part de P perdue selon l'issue de l'enjambée
 var _valeur_fragment: float  # avant le multiplicateur M(P)
 var _duree_perte_s: float  # un trébuchement fait perdre les fragments de cette durée
@@ -99,6 +114,11 @@ var _fenetre_parfaite_de_base_ms: float
 var _temps := 0.0  # secondes écoulées depuis le début de la nuit
 var _ramassages_recents: Array[Dictionary] = []  # { "temps": ..., "gain": ... }
 var _recharge_casse_s := 0.0  # temps avant de pouvoir casser un nouvel obstacle
+
+var _noeuds: Array  # les nœuds de la Constellation décrits dans balance.json
+var _intervalle_achat_automatique_s: float
+var _attente_achat_automatique_s := 0.0
+var _recharge_gratuite_s := 0.0  # temps avant la prochaine enjambée parfaite gratuite
 
 
 func _ready() -> void:
@@ -121,10 +141,16 @@ func _ready() -> void:
 	for fiche in _fiches_ameliorations:
 		ameliorations[fiche["id"]] = 0
 
+	_noeuds = balance["constellation"]["noeuds"]
+	_intervalle_achat_automatique_s = balance["constellation"]["achat_automatique_intervalle_s"]
+	for noeud in _noeuds:
+		constellation[noeud["id"]] = false
+
 
 func _process(delta: float) -> void:
 	_temps += delta
 	_recharge_casse_s = maxf(0.0, _recharge_casse_s - delta)
+	_recharge_gratuite_s = maxf(0.0, _recharge_gratuite_s - delta)
 	var acceleration := 1.0 + bonus_descente_pourcent() / 100.0
 	# Bornée : après une très longue image, le calcul pourrait dépasser le maximum.
 	profondeur = minf(
@@ -136,13 +162,28 @@ func _process(delta: float) -> void:
 	if gain > 0.0:
 		_gagner(gain)
 
+	if achat_automatique and a_l_achat_automatique():
+		_attente_achat_automatique_s -= delta
+		if _attente_achat_automatique_s <= 0.0:
+			_attente_achat_automatique_s = _intervalle_achat_automatique_s
+			_acheter_le_mouton_le_plus_cher()
+
 
 # --- Le dormeur ---
 
 
 ## Le dormeur a enjambé un obstacle (ou fait un pas dans le vide).
 func enjamber(parfaite: bool) -> void:
+	# La Constellation peut offrir une enjambée parfaite de temps en temps.
+	if parfaite and enjambee_gratuite_prete():
+		_recharge_gratuite_s = _effet("parfaite_gratuite_toutes_les_s")
+		return
 	_faire_payer("parfaite" if parfaite else "maladroite")
+
+
+## Vrai si la prochaine enjambée parfaite ne coûtera rien.
+func enjambee_gratuite_prete() -> bool:
+	return _recharge_gratuite_s <= 0.0 and _effet("parfaite_gratuite_toutes_les_s") > 0.0
 
 
 ## Le dormeur a trébuché : P chute et les fragments ramassés depuis
@@ -324,6 +365,7 @@ func se_reveiller() -> bool:
 	_temps = 0.0
 	_ramassages_recents.clear()
 	_recharge_casse_s = 0.0
+	_recharge_gratuite_s = 0.0
 	for id: String in moutons:
 		moutons[id] = 0
 		troupeau_change.emit(id, 0)
@@ -332,11 +374,66 @@ func se_reveiller() -> bool:
 		amelioration_changee.emit(id, 0)
 	fragments = 0.0
 	fragments_de_la_nuit = 0.0
-	profondeur = 0.0
-	profondeur_record = 0.0
+	profondeur = profondeur_de_depart()
+	profondeur_record = profondeur
 
 	nuit_terminee.emit(resume)
 	return true
+
+
+# --- La Constellation ---
+
+
+## Les nœuds de la Constellation, tels que décrits dans balance.json.
+func noeuds_de_la_constellation() -> Array:
+	return _noeuds
+
+
+## Vrai si le nœud peut être acheté maintenant : pas encore acquis, nœud
+## précédent de la branche acquis, assez de réminiscences.
+func peut_acheter_noeud(id: String) -> bool:
+	var noeud := _fiche_noeud(id)
+	return (
+		not constellation[id]
+		and noeud_accessible(id)
+		and reminiscences >= noeud["cout"]
+	)
+
+
+## Vrai si le nœud qui précède celui-ci dans sa branche est acquis (ou s'il
+## n'y en a pas).
+func noeud_accessible(id: String) -> bool:
+	var noeud := _fiche_noeud(id)
+	return not noeud.has("requiert") or constellation[noeud["requiert"]]
+
+
+## Dépense des réminiscences pour acquérir un nœud, pour toujours. Renvoie
+## vrai si c'est fait.
+func acheter_noeud(id: String) -> bool:
+	if not peut_acheter_noeud(id):
+		return false
+	reminiscences -= int(_fiche_noeud(id)["cout"])
+	constellation[id] = true
+	constellation_changee.emit(id)
+	return true
+
+
+## Profondeur à laquelle commence chaque nuit.
+func profondeur_de_depart() -> float:
+	for noeud in _noeuds:
+		if noeud["effet"] == "depart_palier" and constellation[noeud["id"]]:
+			return _seuils_paliers[noeud["valeur"]]
+	return 0.0
+
+
+## Vrai si la Constellation permet au jeu d'acheter les moutons tout seul.
+func a_l_achat_automatique() -> bool:
+	return _effet("achat_automatique") > 0.0
+
+
+## Durée ajoutée au plafond des gains hors-ligne, en secondes.
+func bonus_plafond_hors_ligne_s() -> float:
+	return _effet("plafond_hors_ligne_h") * 3600.0
 
 
 # --- La sauvegarde ---
@@ -355,6 +452,8 @@ func vers_sauvegarde() -> Dictionary:
 		"nuit": nuit,
 		"reminiscences": reminiscences,
 		"reminiscences_derniere_nuit": reminiscences_derniere_nuit,
+		"constellation": constellation.duplicate(),
+		"achat_automatique": achat_automatique,
 	}
 
 
@@ -381,6 +480,13 @@ func depuis_sauvegarde(donnees: Dictionary) -> void:
 		ameliorations[id] = maxi(0, int(niveaux_sauvegardes.get(id, 0)))
 		amelioration_changee.emit(id, ameliorations[id])
 
+	var noeuds_sauvegardes: Dictionary = donnees.get("constellation", {})
+	for id: String in constellation:
+		constellation[id] = bool(noeuds_sauvegardes.get(id, false))
+		if constellation[id]:
+			constellation_changee.emit(id)
+	achat_automatique = bool(donnees.get("achat_automatique", true))
+
 
 # --- Détails ---
 
@@ -401,14 +507,32 @@ func _fiche_amelioration(id: String) -> Dictionary:
 	return {}
 
 
-## Total apporté par les améliorations qui agissent sur `effet` : leur valeur
-## par niveau multipliée par leur niveau.
+func _fiche_noeud(id: String) -> Dictionary:
+	for noeud in _noeuds:
+		if noeud["id"] == id:
+			return noeud
+	assert(false, "Nœud de la Constellation inconnu : %s" % id)
+	return {}
+
+
+## Total apporté à `effet` par les améliorations (valeur par niveau × niveau)
+## et par les nœuds acquis de la Constellation (leur valeur).
 func _effet(effet: String) -> float:
 	var total := 0.0
 	for fiche in _fiches_ameliorations:
 		if fiche["effet"] == effet:
 			total += fiche["valeur_par_niveau"] * ameliorations[fiche["id"]]
+	for noeud in _noeuds:
+		if noeud["effet"] == effet and constellation[noeud["id"]]:
+			total += noeud["valeur"]
 	return total
+
+
+## L'achat automatique prend le mouton le plus cher que le joueur peut payer.
+func _acheter_le_mouton_le_plus_cher() -> void:
+	for i in range(_fiches_moutons.size() - 1, -1, -1):
+		if acheter_mouton(_fiches_moutons[i]["id"]):
+			return
 
 
 ## Valeur sous laquelle `effet` ne peut pas faire descendre ce qu'il modifie.

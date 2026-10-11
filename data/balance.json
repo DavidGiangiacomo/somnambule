@@ -54,5 +54,21 @@
   "reminiscences": {
     "diviseur_fragments": 1000000,
     "bonus_production_pourcent": 10
+  },
+  "constellation": {
+    "achat_automatique_intervalle_s": 0.5,
+    "branches": [
+      { "id": "abysses", "nom": "Abysses" },
+      { "id": "lucidite", "nom": "Lucidité" },
+      { "id": "troupeau", "nom": "Troupeau" }
+    ],
+    "noeuds": [
+      { "id": "sommeil_facile", "branche": "abysses", "nom": "Sommeil facile", "description": "Chaque nuit commence en Sommeil léger", "cout": 1, "effet": "depart_palier", "valeur": "sommeil_leger" },
+      { "id": "chute_amortie", "branche": "abysses", "nom": "Chute amortie", "description": "Trébucher coûte 10 points de moins", "cout": 3, "requiert": "sommeil_facile", "effet": "perte_trebuchement_points", "valeur": -10 },
+      { "id": "oeil_interieur", "branche": "lucidite", "nom": "Œil intérieur", "description": "Fenêtre parfaite +50 ms", "cout": 1, "effet": "fenetre_parfaite_ms", "valeur": 50 },
+      { "id": "pas_de_velours", "branche": "lucidite", "nom": "Pas de velours", "description": "Une enjambée parfaite gratuite par minute", "cout": 3, "requiert": "oeil_interieur", "effet": "parfaite_gratuite_toutes_les_s", "valeur": 60 },
+      { "id": "berger_endormi", "branche": "troupeau", "nom": "Berger endormi", "description": "Les moutons s'achètent tout seuls", "cout": 1, "effet": "achat_automatique", "valeur": 1 },
+      { "id": "longue_nuit", "branche": "troupeau", "nom": "Longue nuit", "description": "Gains hors-ligne : 2 h de plus", "cout": 3, "requiert": "berger_endormi", "effet": "plafond_hors_ligne_h", "valeur": 2 }
+    ]
   }
 }

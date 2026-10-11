@@ -22,15 +22,28 @@ mouse_filter = 2
 theme_override_constants/separation = 12
 
 [node name="Defile" type="Control" parent="Colonne"]
-custom_minimum_size = Vector2(0, 100)
+custom_minimum_size = Vector2(0, 90)
 layout_mode = 2
 mouse_filter = 2
 script = ExtResource("2")
 
-[node name="Gains" type="Label" parent="Colonne"]
+[node name="Ligne" type="HBoxContainer" parent="Colonne"]
 layout_mode = 2
+mouse_filter = 2
+
+[node name="Gains" type="Label" parent="Colonne/Ligne"]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 40
 text = "Troupeau : +0,0 par seconde"
+
+[node name="AchatAutomatique" type="CheckButton" parent="Colonne/Ligne"]
+visible = false
+custom_minimum_size = Vector2(0, 70)
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 34
+text = "Achat auto"
 
 [node name="Boutons" type="VBoxContainer" parent="Colonne"]
 layout_mode = 2

@@ -54,6 +54,7 @@ func _ready() -> void:
 	GameState.troupeau_change.connect(_sur_troupeau_change)
 	_sur_troupeau_change("", 0)
 	GameState.amelioration_changee.connect(_sur_amelioration_changee)
+	GameState.constellation_changee.connect(_sur_constellation_changee)
 	_sur_amelioration_changee("", 0)
 
 
@@ -122,4 +123,8 @@ func _sur_troupeau_change(_id: String, _nombre: int) -> void:
 
 
 func _sur_amelioration_changee(_id: String, _niveau: int) -> void:
+	dormeur.fenetre_parfaite_s = GameState.fenetre_parfaite_ms() / 1000.0
+
+
+func _sur_constellation_changee(_id: String) -> void:
 	dormeur.fenetre_parfaite_s = GameState.fenetre_parfaite_ms() / 1000.0

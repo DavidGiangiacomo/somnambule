@@ -125,3 +125,35 @@ Les effets viennent du GDD ; les prix sont **inventés**. Le jeu les applique
 |---|---|---|
 | `diviseur_fragments` | R = ⌊√(F / `diviseur_fragments`)⌋, où F est le total des fragments gagnés pendant la nuit | oui |
 | `bonus_production_pourcent` | bonus de production globale par réminiscence gardée (non dépensée). **Calé** à 10 (GDD : 2) pour que la deuxième nuit soit nettement plus rapide que la première (issue #20) | oui |
+
+## constellation
+
+L'arbre où se dépensent les réminiscences (issue #21) : trois `branches`, deux
+`noeuds` par branche pour le MVP. Un nœud acheté l'est pour toujours, Réveils
+compris ; les réminiscences dépensées ne donnent plus de bonus de production.
+
+| Champ | Sens |
+|---|---|
+| `noeuds[].branche` | identifiant de sa branche |
+| `noeuds[].nom`, `description` | textes affichés au joueur |
+| `noeuds[].cout` | prix en réminiscences |
+| `noeuds[].requiert` | nœud à posséder d'abord (absent pour le premier d'une branche) |
+| `noeuds[].effet`, `valeur` | ce que le nœud change, et de combien |
+| `achat_automatique_intervalle_s` | temps entre deux achats automatiques de moutons |
+
+Effets :
+
+- `depart_palier` : chaque nuit commence au seuil du palier nommé par `valeur` ;
+- `perte_trebuchement_points` et `fenetre_parfaite_ms` : les mêmes que ceux
+  des améliorations, auxquels ils s'ajoutent (le plancher de la Couette vaut
+  aussi pour le nœud) ;
+- `parfaite_gratuite_toutes_les_s` : une enjambée parfaite ne coûte rien, au
+  plus une fois toutes les `valeur` secondes ;
+- `achat_automatique` : le jeu achète le mouton le plus cher que le joueur peut
+  payer, tant que le joueur laisse l'option activée ;
+- `plafond_hors_ligne_h` : heures ajoutées au plafond des gains hors-ligne
+  (issue #22).
+
+Les effets viennent de l'issue #21 ; les noms, les descriptions, les coûts
+(1 puis 3 réminiscences) et l'intervalle d'achat sont **inventés**. Le
+simulateur n'utilise pas cette section.
