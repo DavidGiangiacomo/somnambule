@@ -42,6 +42,8 @@ func _ready() -> void:
 	_sur_profondeur_changee(GameState.profondeur)
 	GameState.troupeau_change.connect(_sur_troupeau_change)
 	_sur_troupeau_change("", 0)
+	GameState.amelioration_changee.connect(_sur_amelioration_changee)
+	_sur_amelioration_changee("", 0)
 
 
 func _process(_delta: float) -> void:
@@ -94,3 +96,7 @@ func _sur_profondeur_changee(profondeur: float) -> void:
 
 func _sur_troupeau_change(_id: String, _nombre: int) -> void:
 	fragments_hauts.modulate.a = 1.0 if GameState.ramasse_hors_de_portee() else OPACITE_HORS_DE_PORTEE
+
+
+func _sur_amelioration_changee(_id: String, _niveau: int) -> void:
+	dormeur.fenetre_parfaite_s = GameState.fenetre_parfaite_ms() / 1000.0

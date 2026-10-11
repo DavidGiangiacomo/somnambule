@@ -3,7 +3,7 @@ extends MarginContainer
 ## mouton. Il ne fait qu'afficher : c'est GameState qui tient les comptes et
 ## décide si un achat est possible.
 
-const HAUTEUR_BOUTON := 110.0
+const HAUTEUR_BOUTON := 100.0
 const TAILLE_POLICE := 40
 
 var _fiches: Array  # les moutons tels que décrits dans balance.json

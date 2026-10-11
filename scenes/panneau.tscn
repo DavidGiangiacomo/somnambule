@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/troupeau.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/ameliorations.tscn" id="2"]
+
+[node name="Panneau" type="TabContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 40
+current_tab = 0
+
+[node name="Troupeau" parent="." instance=ExtResource("1")]
+layout_mode = 2
+
+[node name="Dormeur" parent="." instance=ExtResource("2")]
+visible = false
+layout_mode = 2

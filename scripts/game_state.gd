@@ -2,8 +2,8 @@ extends Node
 ## État du jeu, chargé automatiquement au démarrage sous le nom GameState
 ## (voir Projet → Paramètres du projet → Chargement automatique).
 ##
-## Il tient les ressources, le troupeau et la profondeur, applique les règles
-## du jeu, et prévient l'affichage par des signaux. Les scènes ne modifient
+## Il tient les ressources, le troupeau, les améliorations du dormeur et la
+## profondeur, applique les règles du jeu, et prévient l'affichage par des signaux. Les scènes ne modifient
 ## jamais ces valeurs elles-mêmes : elles disent ce qui s'est passé (« le
 ## dormeur a trébuché », « le joueur veut un mouton ») en appelant les
 ## fonctions ci-dessous.
@@ -14,6 +14,9 @@ signal fragments_perdus(montant: float)
 signal profondeur_changee(profondeur: float)
 ## Le nombre de moutons d'un type a changé (achat ou chargement de la partie).
 signal troupeau_change(id: String, nombre: int)
+## Une amélioration du dormeur a changé de niveau (achat ou chargement).
+signal amelioration_changee(id: String, niveau: int)
+## Le joueur vient d'acheter un mouton ou un niveau d'amélioration.
 signal achat_effectue(id: String)
 
 var fragments := 0.0:
@@ -33,6 +36,9 @@ var profondeur_max: float
 ## Nombre de moutons possédés, par identifiant : { "mouton": 3, "belier": 0… }
 var moutons: Dictionary = {}
 
+## Niveau de chaque amélioration du dormeur : { "oreiller": 2, "couette": 0… }
+var ameliorations: Dictionary = {}
+
 var _couts_pourcent: Dictionary  # part de P perdue selon l'issue de l'enjambée
 var _valeur_fragment: float  # avant le multiplicateur M(P)
 var _duree_perte_s: float  # un trébuchement fait perdre les fragments de cette durée
@@ -40,6 +46,8 @@ var _duree_perte_s: float  # un trébuchement fait perdre les fragments de cette
 var _fiches_moutons: Array  # les moutons tels que décrits dans balance.json
 var _doublement_tous_les: int
 var _seuils_paliers: Dictionary = {}  # identifiant du palier → profondeur d'entrée
+var _fiches_ameliorations: Array  # les améliorations décrites dans balance.json
+var _fenetre_parfaite_de_base_ms: float
 
 var _temps := 0.0  # secondes écoulées depuis le début de la nuit
 var _ramassages_recents: Array[Dictionary] = []  # { "temps": ..., "gain": ... }
@@ -60,11 +68,17 @@ func _ready() -> void:
 	for palier in balance["profondeur"]["paliers"]:
 		_seuils_paliers[palier["id"]] = palier["seuil"]
 
+	_fiches_ameliorations = balance["ameliorations"]
+	_fenetre_parfaite_de_base_ms = balance["enjambee"]["fenetre_parfaite_ms"]
+	for fiche in _fiches_ameliorations:
+		ameliorations[fiche["id"]] = 0
+
 
 func _process(delta: float) -> void:
 	_temps += delta
 	_recharge_casse_s = maxf(0.0, _recharge_casse_s - delta)
-	profondeur += Formules.variation_profondeur(profondeur, delta)
+	var acceleration := 1.0 + bonus_descente_pourcent() / 100.0
+	profondeur += Formules.variation_profondeur(profondeur, delta) * acceleration
 
 	var gain := gains_par_seconde() * delta
 	if gain > 0.0:
@@ -108,7 +122,7 @@ func ramasser_fragment() -> void:
 
 ## Prix du prochain mouton de ce type.
 func cout_mouton(id: String) -> float:
-	return Formules.cout_mouton(_fiche_mouton(id), moutons[id])
+	return Formules.cout_achat(_fiche_mouton(id), moutons[id])
 
 
 func peut_acheter_mouton(id: String) -> bool:
@@ -164,6 +178,54 @@ func ramasse_hors_de_portee() -> bool:
 	return false
 
 
+# --- Les améliorations du dormeur ---
+
+
+## Prix du prochain niveau de cette amélioration.
+func cout_amelioration(id: String) -> float:
+	return Formules.cout_achat(_fiche_amelioration(id), ameliorations[id])
+
+
+## Vrai si un niveau de plus n'apporterait rien : l'effet a atteint son plancher.
+func amelioration_au_maximum(id: String) -> bool:
+	var fiche := _fiche_amelioration(id)
+	return (
+		fiche["effet"] == "perte_trebuchement_points"
+		and cout_trebuchement_pourcent() <= fiche.get("plancher", 0.0)
+	)
+
+
+func peut_acheter_amelioration(id: String) -> bool:
+	return not amelioration_au_maximum(id) and fragments >= cout_amelioration(id)
+
+
+## Achète un niveau si le joueur en a les moyens. Renvoie vrai si c'est fait.
+func acheter_amelioration(id: String) -> bool:
+	if not peut_acheter_amelioration(id):
+		return false
+	fragments -= cout_amelioration(id)
+	ameliorations[id] += 1
+	amelioration_changee.emit(id, ameliorations[id])
+	achat_effectue.emit(id)
+	return true
+
+
+## De combien la descente dans le sommeil est accélérée : 20 veut dire +20 %.
+func bonus_descente_pourcent() -> float:
+	return _effet("vitesse_descente_pourcent")
+
+
+## Part de P perdue à chaque trébuchement, améliorations comprises.
+func cout_trebuchement_pourcent() -> float:
+	var cout: float = _couts_pourcent["trebuchement"] + _effet("perte_trebuchement_points")
+	return maxf(cout, _plancher("perte_trebuchement_points"))
+
+
+## Durée de la fenêtre d'enjambée parfaite, améliorations comprises.
+func fenetre_parfaite_ms() -> float:
+	return _fenetre_parfaite_de_base_ms + _effet("fenetre_parfaite_ms")
+
+
 # --- La sauvegarde ---
 
 
@@ -173,6 +235,7 @@ func vers_sauvegarde() -> Dictionary:
 		"fragments": fragments,
 		"profondeur": profondeur,
 		"moutons": moutons.duplicate(),
+		"ameliorations": ameliorations.duplicate(),
 	}
 
 
@@ -188,6 +251,11 @@ func depuis_sauvegarde(donnees: Dictionary) -> void:
 		moutons[id] = maxi(0, int(moutons_sauvegardes.get(id, 0)))
 		troupeau_change.emit(id, moutons[id])
 
+	var niveaux_sauvegardes: Dictionary = donnees.get("ameliorations", {})
+	for id: String in ameliorations:
+		ameliorations[id] = maxi(0, int(niveaux_sauvegardes.get(id, 0)))
+		amelioration_changee.emit(id, ameliorations[id])
+
 
 # --- Détails ---
 
@@ -200,6 +268,32 @@ func _fiche_mouton(id: String) -> Dictionary:
 	return {}
 
 
+func _fiche_amelioration(id: String) -> Dictionary:
+	for fiche in _fiches_ameliorations:
+		if fiche["id"] == id:
+			return fiche
+	assert(false, "Amélioration inconnue : %s" % id)
+	return {}
+
+
+## Total apporté par les améliorations qui agissent sur `effet` : leur valeur
+## par niveau multipliée par leur niveau.
+func _effet(effet: String) -> float:
+	var total := 0.0
+	for fiche in _fiches_ameliorations:
+		if fiche["effet"] == effet:
+			total += fiche["valeur_par_niveau"] * ameliorations[fiche["id"]]
+	return total
+
+
+## Valeur sous laquelle `effet` ne peut pas faire descendre ce qu'il modifie.
+func _plancher(effet: String) -> float:
+	for fiche in _fiches_ameliorations:
+		if fiche["effet"] == effet:
+			return fiche.get("plancher", 0.0)
+	return 0.0
+
+
 ## Délai entre deux obstacles cassés, ou 0 si aucun mouton possédé n'en casse.
 func _intervalle_casse_s() -> float:
 	for fiche in _fiches_moutons:
@@ -210,7 +304,10 @@ func _intervalle_casse_s() -> float:
 
 ## Retire à P la part prévue pour cette issue : 3 veut dire 3 % de P.
 func _faire_payer(issue: String) -> void:
-	profondeur -= profondeur * _couts_pourcent[issue] / 100.0
+	var cout: float = _couts_pourcent[issue]
+	if issue == "trebuchement":
+		cout = cout_trebuchement_pourcent()
+	profondeur -= profondeur * cout / 100.0
 
 
 func _oublier_ramassages_anciens() -> void:
