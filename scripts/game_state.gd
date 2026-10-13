@@ -32,6 +32,9 @@ signal nuit_terminee(resume: Dictionary)
 signal constellation_changee(id: String)
 ## L'option d'achat automatique des moutons a été activée ou coupée.
 signal achat_automatique_change(actif: bool)
+## Le joueur revient après une absence qui a rapporté des fragments.
+## `resume` est décrit dans appliquer_absence().
+signal retour_d_absence(resume: Dictionary)
 
 var fragments := 0.0:
 	set(valeur):
@@ -120,6 +123,12 @@ var _intervalle_achat_automatique_s: float
 var _attente_achat_automatique_s := 0.0
 var _recharge_gratuite_s := 0.0  # temps avant la prochaine enjambée parfaite gratuite
 
+## Résumé de la dernière absence, tant que l'écran « Pendant que tu dormais »
+## ne l'a pas montré. Vide s'il n'y a rien à montrer.
+var absence_a_montrer: Dictionary = {}
+
+var _hors_ligne: Dictionary  # les règles des gains hors-ligne dans balance.json
+
 
 func _ready() -> void:
 	var balance := Balance.donnees()
@@ -143,6 +152,7 @@ func _ready() -> void:
 
 	_noeuds = balance["constellation"]["noeuds"]
 	_intervalle_achat_automatique_s = balance["constellation"]["achat_automatique_intervalle_s"]
+	_hors_ligne = balance["hors_ligne"]
 	for noeud in _noeuds:
 		constellation[noeud["id"]] = false
 
@@ -434,6 +444,52 @@ func a_l_achat_automatique() -> bool:
 ## Durée ajoutée au plafond des gains hors-ligne, en secondes.
 func bonus_plafond_hors_ligne_s() -> float:
 	return _effet("plafond_hors_ligne_h") * 3600.0
+
+
+# --- Les gains hors-ligne ---
+
+
+## Durée maximale d'absence qui rapporte, en secondes.
+func plafond_hors_ligne_s() -> float:
+	return _hors_ligne["plafond_h"] * 3600.0 + bonus_plafond_hors_ligne_s()
+
+
+## Le joueur revient après `duree_s` secondes d'absence. Le dormeur a continué
+## de dormir à la profondeur où il était : le troupeau a produit pendant ce
+## temps, dans la limite du plafond. Rien n'est ramassé sur le parcours.
+##
+## Renvoie le résumé de l'absence, ou un dictionnaire vide si elle ne rapporte
+## rien : trop courte, pas de troupeau, ou durée négative (l'horloge du
+## téléphone a reculé).
+func appliquer_absence(duree_s: float) -> Dictionary:
+	if duree_s < _hors_ligne["absence_min_s"]:
+		return {}
+
+	var duree_comptee_s := minf(duree_s, plafond_hors_ligne_s())
+	var gain := gains_par_seconde() * duree_comptee_s
+	# Une absence de la longueur d'une vraie nuit est récompensée.
+	var nuit_complete: Dictionary = _hors_ligne["nuit_complete"]
+	var est_nuit_complete: bool = (
+		duree_s >= nuit_complete["min_h"] * 3600.0 and duree_s <= nuit_complete["max_h"] * 3600.0
+	)
+	if est_nuit_complete:
+		gain *= 1.0 + nuit_complete["bonus_pourcent"] / 100.0
+	if gain <= 0.0:
+		return {}
+
+	_gagner(gain)
+	_temps += duree_comptee_s
+	absence_a_montrer = {
+		"duree_s": duree_s,
+		"duree_comptee_s": duree_comptee_s,
+		"plafond_atteint": duree_s > duree_comptee_s,
+		"gain": gain,
+		"nuit_complete": est_nuit_complete,
+		"palier": palier,
+		"multiplicateur": Formules.multiplicateur(profondeur),
+	}
+	retour_d_absence.emit(absence_a_montrer)
+	return absence_a_montrer
 
 
 # --- La sauvegarde ---
