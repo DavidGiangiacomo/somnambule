@@ -55,6 +55,11 @@
     "diviseur_fragments": 1000000,
     "bonus_production_pourcent": 10
   },
+  "hors_ligne": {
+    "absence_min_s": 60,
+    "plafond_h": 8,
+    "nuit_complete": { "min_h": 6, "max_h": 10, "bonus_pourcent": 25 }
+  },
   "constellation": {
     "achat_automatique_intervalle_s": 0.5,
     "branches": [

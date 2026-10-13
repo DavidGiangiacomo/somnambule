@@ -6,6 +6,10 @@ extends Node
 ## réserve au jeu : toutes les 30 secondes, quand l'application passe en
 ## arrière-plan, et quand on ferme la fenêtre sur ordinateur.
 ##
+## Chaque sauvegarde porte son heure. Au lancement, ou au retour de
+## l'arrière-plan, le temps écoulé depuis est donné à GameState, qui en tire
+## les gains hors-ligne.
+##
 ## Le fichier porte un numéro de version, `save_version`. Quand son format
 ## changera, _migrer() mettra les anciennes sauvegardes au format du jour.
 
@@ -16,6 +20,11 @@ const INTERVALLE_S := 30.0
 var chemin := "user://sauvegarde.json"
 ## L'état à sauvegarder. Les tests en fournissent un autre que la vraie partie.
 var etat: Node = GameState
+## Donne l'heure, en secondes depuis 1970. Les tests la remplacent pour
+## simuler une absence sans attendre.
+var horloge: Callable = Time.get_unix_time_from_system
+
+var _horodatage := 0.0  # heure de la dernière sauvegarde écrite ou lue (0 : aucune)
 
 
 func _ready() -> void:
@@ -33,13 +42,17 @@ func _notification(what: int) -> void:
 	# CLOSE_REQUEST : il ferme la fenêtre sur ordinateur.
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		sauvegarder()
+	# RESUMED : il revient dans l'application restée en arrière-plan.
+	elif what == NOTIFICATION_APPLICATION_RESUMED:
+		_compter_absence()
 
 
 func sauvegarder() -> void:
 	var donnees: Dictionary = etat.vers_sauvegarde()
 	donnees["save_version"] = VERSION
-	# Heure de la sauvegarde, pour calculer plus tard les gains hors-ligne.
-	donnees["horodatage"] = Time.get_unix_time_from_system()
+	# Heure de la sauvegarde, pour calculer les gains hors-ligne au retour.
+	_horodatage = horloge.call()
+	donnees["horodatage"] = _horodatage
 
 	# On écrit d'abord à côté, puis on remplace : si l'application est tuée
 	# pendant l'écriture, l'ancienne sauvegarde reste intacte.
@@ -63,6 +76,19 @@ func charger() -> void:
 		push_warning("Sauvegarde illisible : la partie repart de zéro.")
 		return
 	etat.depuis_sauvegarde(_migrer(json.data))
+	_horodatage = json.data.get("horodatage", 0.0)
+	_compter_absence()
+
+
+## Donne à l'état le temps écoulé depuis la dernière sauvegarde. Si l'horloge
+## du téléphone a reculé, la durée est négative et ne rapporte rien.
+func _compter_absence() -> void:
+	if _horodatage <= 0.0:
+		return
+	var maintenant: float = horloge.call()
+	etat.appliquer_absence(maintenant - _horodatage)
+	# Cette absence est comptée : la suivante partira de maintenant.
+	_horodatage = maintenant
 
 
 ## Met une sauvegarde ancienne au format actuel, une version après l'autre.

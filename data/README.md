@@ -126,6 +126,24 @@ Les effets viennent du GDD ; les prix sont **inventés**. Le jeu les applique
 | `diviseur_fragments` | R = ⌊√(F / `diviseur_fragments`)⌋, où F est le total des fragments gagnés pendant la nuit | oui |
 | `bonus_production_pourcent` | bonus de production globale par réminiscence gardée (non dépensée). **Calé** à 10 (GDD : 2) pour que la deuxième nuit soit nettement plus rapide que la première (issue #20) | oui |
 
+## hors_ligne
+
+Ce que le troupeau rapporte pendant que l'application est fermée ou en
+arrière-plan (issue #22) : sa production, multipliée par M(P) à la profondeur
+qu'avait le dormeur au départ du joueur, et par le bonus des réminiscences.
+Pas de fragments ramassés.
+
+| Champ | Sens |
+|---|---|
+| `absence_min_s` | en dessous de cette durée, l'absence ne rapporte rien et n'est pas annoncée. Valeur **inventée** |
+| `plafond_h` | durée maximale comptée (GDD : 8 h, une nuit). Le nœud Longue nuit de la Constellation l'allonge |
+| `nuit_complete.min_h`, `max_h` | une absence comprise entre ces deux durées est une nuit complète |
+| `nuit_complete.bonus_pourcent` | bonus sur les gains d'une nuit complète (GDD : +25 %) |
+
+Si l'horloge du téléphone est revenue en arrière depuis la dernière
+sauvegarde, l'absence ne rapporte rien. Le simulateur n'utilise pas cette
+section.
+
 ## constellation
 
 L'arbre où se dépensent les réminiscences (issue #21) : trois `branches`, deux
