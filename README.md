@@ -52,3 +52,13 @@ dans Éditeur → Paramètres de l'éditeur → Export → Android. Brancher le
 téléphone en USB (débogage USB activé) puis utiliser le bouton de déploiement
 en haut à droite de l'éditeur, ou Projet → Exporter → Android, qui écrit
 `build/somnambule.apk`.
+
+Deux préréglages d'export existent :
+
+| Préréglage | Fichier | Compteur d'images par seconde |
+|---|---|---|
+| Android | `build/somnambule.apk` | masqué : c'est la version à faire essayer |
+| Android (développement) | `build/somnambule-dev.apk` | affiché, avec le nombre de nœuds |
+
+Les deux portent le même identifiant : installer l'un remplace l'autre, en
+gardant la partie en cours.
